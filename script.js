@@ -904,6 +904,7 @@
       renderSystemSettings() // Call this here to populate systemSettings array
       renderDashboardOverview()
       renderActivityLog() // Initial render of activity log
+      setupUserManagementListeners()
 
       // Logout button functionality
       if (logoutButton) {
