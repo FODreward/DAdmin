@@ -279,25 +279,57 @@
       </section>
 
       <section id="point-transfers-section" class="section-content">
-        <h2 class="text-3xl font-bold mb-6">Point Transfers History</h2>
-        <div class="card">
-          <h3 class="text-xl font-semibold mb-4">Transfer Log</h3>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="table-header sortable-header" data-sort-by="sender">Sender</th>
-                  <th class="table-header sortable-header" data-sort-by="receiver">Receiver</th>
-                  <th class="table-header sortable-header" data-sort-by="amount">Amount</th>
-                  <th class="table-header sortable-header" data-sort-by="timestamp">Timestamp</th>
-                </tr>
-              </thead>
-              <tbody id="point-transfers-table-body" class="bg-white divide-y divide-gray-200">
-                <!-- Point transfer data will be inserted here by JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
+  <h2 class="text-3xl font-bold mb-6">Point Transfers History</h2>
+
+  <!-- Filter Controls -->
+  <div class="mb-4 flex flex-wrap items-center gap-4">
+    <div>
+      <label for="filterStartDate" class="block text-sm font-medium text-gray-700">Start Date</label>
+      <input type="date" id="filterStartDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+    </div>
+
+    <div>
+      <label for="filterEndDate" class="block text-sm font-medium text-gray-700">End Date</label>
+      <input type="date" id="filterEndDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+    </div>
+
+    <div>
+      <label for="searchEmail" class="block text-sm font-medium text-gray-700">Search Email</label>
+      <input type="text" id="searchEmail" placeholder="user@example.com" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+    </div>
+
+    <div class="mt-6">
+      <button onclick="renderPointTransfers()" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Filter</button>
+    </div>
+  </div>
+
+  <!-- Transfer Log Table -->
+  <div class="card">
+    <h3 class="text-xl font-semibold mb-4">Transfer Log</h3>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sender</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Receiver</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
+          </tr>
+        </thead>
+        <tbody id="pointTransfersTableBody" class="bg-white divide-y divide-gray-200">
+          <!-- JS will render rows here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div class="mt-6 flex justify-between items-center">
+    <button onclick="prevPage()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Previous</button>
+    <span id="paginationInfo" class="text-sm text-gray-600">Page 1 of 1</span>
+    <button onclick="nextPage()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next</button>
+  </div>
       </section>
 
       <section id="redemption-requests-section" class="section-content">
