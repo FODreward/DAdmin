@@ -528,37 +528,44 @@ async function renderUserManagement() {
 
 // Add this new function:
 function setupUserManagementListeners() {
+  const autoUserApprovalToggle = document.getElementById("autoUserApprovalToggle");
+
   if (autoUserApprovalToggle) {
     autoUserApprovalToggle.addEventListener("change", async (e) => {
-      const newValue = e.target.checked.toString() // "true" or "false"
+      const newValue = e.target.checked.toString(); // "true" or "false"
       try {
         // Call the API to update the system setting
         await fetchApi(
           "/admin/settings",
           "PUT",
-          { key: "auto_user_approval", value: newValue, description: "Automatically approve new user registrations" },
-          true,
-        )
-        alert(`Auto User Approval set to: ${newValue}`)
+          {
+            key: "auto_user_approval",
+            value: newValue,
+            description: "Automatically approve new user registrations",
+          },
+          true
+        );
+
+        alert(`Auto User Approval set to: ${newValue}`);
+
         // Visually update the toggle's background and dot
-        const toggleBg = autoUserApprovalToggle.nextElementSibling // The div with class toggle-bg
-        const toggleDot = toggleBg.nextElementSibling // The div with class toggle-dot
+        const toggleBg = autoUserApprovalToggle.nextElementSibling; // .toggle-bg
+        const toggleDot = toggleBg.nextElementSibling; // .toggle-dot
 
         if (e.target.checked) {
-          toggleBg.classList.remove("bg-gray-600")
-          toggleBg.classList.add("bg-green-500")
-          toggleDot.classList.add("translate-x-full")
+          toggleBg.classList.remove("bg-gray-600");
+          toggleBg.classList.add("bg-green-500");
+          toggleDot.classList.add("translate-x-full");
         } else {
-          toggleBg.classList.remove("bg-green-500")
-          toggleBg.classList.add("bg-gray-600")
-          toggleDot.classList.remove("translate-x-full")
+          toggleBg.classList.remove("bg-green-500");
+          toggleBg.classList.add("bg-gray-600");
+          toggleDot.classList.remove("translate-x-full");
         }
       } catch (error) {
-        alert(`Failed to update auto user approval: ${error.message}`)
-        // Revert the toggle state if API call fails
-        e.target.checked = !e.target.checked
+        alert(`Failed to update auto user approval: ${error.message}`);
+        e.target.checked = !e.target.checked; // revert toggle
       }
-    })
+    });
   }
 }
 
