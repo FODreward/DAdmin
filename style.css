@@ -27,6 +27,7 @@ body {
   /* Changed from .sidebar.collapsed */
   width: 4rem; /* Collapsed width */
 }
+
 #main-content {
   /* Changed from .main-content */
   margin-left: 16rem; /* Default margin for expanded sidebar */
