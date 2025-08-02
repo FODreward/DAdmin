@@ -512,33 +512,46 @@
   }
 
   // Add this new function:
-  function setupUserManagementListeners() {
-    const toggle = document.getElementById("autoUserApprovalToggle")
-    if (!toggle) return
+  async function setupUserManagementListeners() {
+  const toggle = document.getElementById("autoUserApprovalToggle")
+  if (!toggle) return
 
-    toggle.addEventListener("change", async (e) => {
-      const newValue = e.target.checked.toString() // "true" or "false"
+  // Load current setting
+  try {
+    const res = await fetchApi("/admin/settings", "GET", null, true)
+    const setting = res.find((s) => s.key === "auto_user_approval")
 
-      try {
-        await fetchApi(
-          "/admin/settings",
-          "PUT",
-          {
-            key: "auto_user_approval",
-            value: newValue,
-            description: "Automatically approve new user registrations",
-          },
-          true,
-        )
-
-        alert(`Auto User Approval set to: ${newValue}`)
-      } catch (error) {
-        alert(`Failed to update setting: ${error.message}`)
-        e.target.checked = !e.target.checked // Revert toggle on error
-      }
-    })
+    if (setting) {
+      toggle.checked = setting.value === "true"
+    }
+  } catch (error) {
+    console.error("Failed to load auto approval setting:", error)
   }
 
+  // Listen for toggle changes
+  toggle.addEventListener("change", async (e) => {
+    const newValue = e.target.checked.toString()
+
+    try {
+      await fetchApi(
+        "/admin/settings",
+        "PUT",
+        {
+          key: "auto_user_approval",
+          value: newValue,
+          description: "Automatically approve new user registrations",
+        },
+        true
+      )
+
+      alert(`Auto User Approval set to: ${newValue}`)
+    } catch (error) {
+      alert(`Failed to update setting: ${error.message}`)
+      e.target.checked = !e.target.checked
+    }
+  })
+  }
+  
   async function updateUserStatus(userId, newStatus) {
     try {
       await fetchApi(`/admin/users/${userId}/status`, "PUT", { status: newStatus }, true)
