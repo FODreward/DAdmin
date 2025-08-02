@@ -686,40 +686,90 @@ async function renderSurveyManagement() {
 }
 
 // --- Point Transfers ---
-async function renderPointTransfers() {
-  const pointTransfersTableBody = document.getElementById("pointTransfersTableBody")
-  if (!pointTransfersTableBody) return
+let currentPage = 1;
+const pageSize = 5;
+let fullTransferList = [];
 
-  pointTransfersTableBody.innerHTML = ""
+async function renderPointTransfers() {
+  const tbody = document.getElementById("pointTransfersTableBody");
+  const startDate = document.getElementById("filterStartDate").value;
+  const endDate = document.getElementById("filterEndDate").value;
+  const searchEmail = document.getElementById("searchEmail").value.toLowerCase();
+
+  tbody.innerHTML = "";
 
   try {
-    const pointTransfers = await fetchApi("/admin/point-transfers", "GET", null, true)
+    // Fetch all transfers once
+    const transfers = await fetchApi("/admin/point-transfers", "GET", null, true);
 
-    pointTransfers.forEach((transfer) => {
-      const row = pointTransfersTableBody.insertRow()
-      row.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${transfer.from_user?.email || "N/A"}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transfer.to_user?.email || "N/A"}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transfer.amount}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(transfer.created_at).toLocaleString()}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-          <!-- Optional actions like "Revoke" or "View Detail" can go here -->
-        </td>
-      `
-    })
+    // Filter by date and email
+    fullTransferList = transfers.filter((t) => {
+      const createdAt = new Date(t.created_at);
+      const fromEmail = t.from_user?.email?.toLowerCase() || "";
+      const toEmail = t.to_user?.email?.toLowerCase() || "";
 
-    // Handle empty list
-    if (pointTransfers.length === 0) {
-      const row = pointTransfersTableBody.insertRow()
-      row.innerHTML = `
-        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No point transfers yet.</td>
-      `
+      const matchEmail =
+        !searchEmail ||
+        fromEmail.includes(searchEmail) ||
+        toEmail.includes(searchEmail);
+
+      const matchDate =
+        (!startDate || createdAt >= new Date(startDate)) &&
+        (!endDate || createdAt <= new Date(endDate + "T23:59:59"));
+
+      return matchEmail && matchDate;
+    });
+
+    // Pagination
+    const start = (currentPage - 1) * pageSize;
+    const paginatedTransfers = fullTransferList.slice(start, start + pageSize);
+
+    // Render table
+    if (paginatedTransfers.length === 0) {
+      const row = tbody.insertRow();
+      row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No point transfers found.</td>`;
+    } else {
+      paginatedTransfers.forEach((t) => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+          <td class="px-6 py-4 text-sm font-medium text-gray-900">${t.from_user?.email || "N/A"}</td>
+          <td class="px-6 py-4 text-sm text-gray-500">${t.to_user?.email || "N/A"}</td>
+          <td class="px-6 py-4 text-sm text-gray-500">${t.amount}</td>
+          <td class="px-6 py-4 text-sm text-gray-500">${new Date(t.created_at).toLocaleString()}</td>
+          <td class="px-6 py-4 text-right text-sm font-medium"></td>
+        `;
+      });
     }
-  } catch (error) {
-    console.error("Failed to fetch point transfers:", error)
-    alert(`Failed to load point transfer data: ${error.message}`)
+
+    updatePaginationDisplay();
+  } catch (err) {
+    console.error("Failed to fetch transfers:", err);
+    alert("Error loading transfers.");
   }
 }
+
+function updatePaginationDisplay() {
+  const total = fullTransferList.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const info = document.getElementById("paginationInfo");
+  info.textContent = `Page ${currentPage} of ${totalPages}`;
+}
+
+function nextPage() {
+  const totalPages = Math.ceil(fullTransferList.length / pageSize);
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderPointTransfers();
+  }
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    renderPointTransfers();
+  }
+}
+
 
 function setupSendPointsForm() {
   const sendPointsForm = document.getElementById("sendPointsForm") // Ensure this matches your form's ID
