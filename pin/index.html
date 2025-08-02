@@ -6,9 +6,11 @@
   <title>Verify PIN</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
   <style>
     /* Basic styling for the form container - consistent with login.html */
-    body {
+    body.auth-page {
       display: flex;
       justify-content: center;
       align-items: center;
@@ -61,14 +63,14 @@
     }
   </style>
 </head>
-<body>
+<body class="auth-page">
   <div class="form-container">
     <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Verify PIN</h2>
     <p class="text-gray-600 mb-6">Please enter your 4-digit admin PIN.</p>
     <form id="pin-form" class="space-y-6">
       <div>
         <label for="pin" class="sr-only">4-Digit PIN</label>
-        <input type="text" id="pin" name="pin" class="input-field" maxlength="4" pattern="\d{4}" inputmode="numeric" required>
+        <input type="text" id="pin" name="pin" class="input-field pin-input" maxlength="4" pattern="\d{4}" inputmode="numeric" required>
       </div>
       <div id="pin-error-message" class="error-message hidden"></div>
       <button type="submit" id="pin-submit-button" class="submit-button">Verify PIN</button>
