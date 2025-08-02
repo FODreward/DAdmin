@@ -305,59 +305,51 @@ async function renderActivityLog() {
 
 // --- System Settings ---
 async function renderSystemSettings() {
+  const systemSettingsTableBody = document.getElementById("systemSettingsTableBody")
   if (!systemSettingsTableBody) return
+
   systemSettingsTableBody.innerHTML = ""
+
   try {
-    systemSettings = await fetchApi("/admin/settings", "GET", null, true) // Fetch all system settings
+    const systemSettings = await fetchApi("/admin/settings", "GET", null, true)
 
     systemSettings.forEach((setting) => {
       const row = systemSettingsTableBody.insertRow()
-      const isCheckbox = setting.key.includes("approval")
+      const isCheckbox = setting.key.includes("approval") // you can enhance this check
       const inputType = isCheckbox ? "checkbox" : "text"
-      const inputValue = isCheckbox ? (setting.value === "true" ? "checked" : "") : setting.value
+      const inputId = `setting-value-${setting.key}`
+      const inputValue = setting.value
 
       row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <input type="${inputType}"
-                       id="setting-value-${setting.key}"
-                       class="setting-value-input ${isCheckbox ? "sr-only" : "border border-gray-300 rounded-md p-1 w-full"}"
-                       value="${inputValue}"
-                       ${inputValue}>
-                ${isCheckbox ? `<div class="block bg-gray-600 w-14 h-8 rounded-full toggle-bg"></div><div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition toggle-dot"></div>` : ""}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button id="save-setting-${setting.key}" class="save-setting-btn text-indigo-600 hover:text-indigo-900 ml-2">Save</button>
-            </td>
-        `
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          ${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          <div class="relative inline-block w-14 h-8 align-middle select-none transition duration-200 ease-in">
+            <input type="${inputType}" id="${inputId}"
+              class="setting-value-input ${isCheckbox ? "sr-only" : "border border-gray-300 rounded-md p-1 w-full"}"
+              ${isCheckbox && inputValue === "true" ? "checked" : ""}
+              ${!isCheckbox ? `value="${inputValue}"` : ""}>
+            ${isCheckbox ? `
+              <div class="toggle-bg absolute top-0 left-0 w-14 h-8 bg-gray-600 rounded-full transition"></div>
+              <div class="toggle-dot absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition"></div>
+            ` : ""}
+          </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <button id="save-setting-${setting.key}" class="save-setting-btn text-indigo-600 hover:text-indigo-900 ml-2">
+            Save
+          </button>
+        </td>
+      `
+
+      const input = row.querySelector(`#${inputId}`)
+      const toggleBg = row.querySelector(".toggle-bg")
+      const toggleDot = row.querySelector(".toggle-dot")
+
       if (isCheckbox) {
-        const input = row.querySelector(`#setting-value-${setting.key}`)
-        const toggleBg = row.querySelector(".toggle-bg")
-        const toggleDot = row.querySelector(".toggle-dot")
-        input.parentNode.classList.add(
-          "relative",
-          "inline-block",
-          "w-14",
-          "h-8",
-          "align-middle",
-          "select-none",
-          "transition",
-          "duration-200",
-          "ease-in",
-        )
-
-        if (input.checked) {
-          toggleBg.classList.remove("bg-gray-600")
-          toggleBg.classList.add("bg-green-500")
-          toggleDot.classList.add("translate-x-full")
-        } else {
-          toggleBg.classList.remove("bg-green-500")
-          toggleBg.classList.add("bg-gray-600")
-          toggleDot.classList.remove("translate-x-full")
-        }
-
-        input.addEventListener("change", (e) => {
-          if (e.target.checked) {
+        const updateToggle = (checked) => {
+          if (checked) {
             toggleBg.classList.remove("bg-gray-600")
             toggleBg.classList.add("bg-green-500")
             toggleDot.classList.add("translate-x-full")
@@ -366,9 +358,37 @@ async function renderSystemSettings() {
             toggleBg.classList.add("bg-gray-600")
             toggleDot.classList.remove("translate-x-full")
           }
+        }
+
+        updateToggle(input.checked)
+
+        input.addEventListener("change", () => {
+          updateToggle(input.checked)
         })
       }
+
+      const saveBtn = row.querySelector(`#save-setting-${setting.key}`)
+      saveBtn.addEventListener("click", async () => {
+        const newValue = isCheckbox ? input.checked.toString() : input.value.trim()
+
+        try {
+          await fetchApi("/admin/settings", "PUT", {
+            key: setting.key,
+            value: newValue,
+          }, true)
+
+          alert(`Setting "${setting.key}" updated successfully`)
+        } catch (error) {
+          console.error("Save error:", error)
+          alert(`Failed to update "${setting.key}"`)
+        }
+      })
     })
+  } catch (err) {
+    console.error("Failed to load system settings:", err)
+    alert("Could not load system settings.")
+  }
+}
 
     document.querySelectorAll(".save-setting-btn").forEach((button) => {
       button.addEventListener("click", async (e) => {
@@ -528,45 +548,30 @@ async function renderUserManagement() {
 
 // Add this new function:
 function setupUserManagementListeners() {
-  const autoUserApprovalToggle = document.getElementById("autoUserApprovalToggle");
+  const toggle = document.getElementById("autoUserApprovalToggle")
+  if (!toggle) return
 
-  if (autoUserApprovalToggle) {
-    autoUserApprovalToggle.addEventListener("change", async (e) => {
-      const newValue = e.target.checked.toString(); // "true" or "false"
-      try {
-        // Call the API to update the system setting
-        await fetchApi(
-          "/admin/settings",
-          "PUT",
-          {
-            key: "auto_user_approval",
-            value: newValue,
-            description: "Automatically approve new user registrations",
-          },
-          true
-        );
+  toggle.addEventListener("change", async (e) => {
+    const newValue = e.target.checked.toString() // "true" or "false"
 
-        alert(`Auto User Approval set to: ${newValue}`);
+    try {
+      await fetchApi(
+        "/admin/settings",
+        "PUT",
+        {
+          key: "auto_user_approval",
+          value: newValue,
+          description: "Automatically approve new user registrations"
+        },
+        true
+      )
 
-        // Visually update the toggle's background and dot
-        const toggleBg = autoUserApprovalToggle.nextElementSibling; // .toggle-bg
-        const toggleDot = toggleBg.nextElementSibling; // .toggle-dot
-
-        if (e.target.checked) {
-          toggleBg.classList.remove("bg-gray-600");
-          toggleBg.classList.add("bg-green-500");
-          toggleDot.classList.add("translate-x-full");
-        } else {
-          toggleBg.classList.remove("bg-green-500");
-          toggleBg.classList.add("bg-gray-600");
-          toggleDot.classList.remove("translate-x-full");
-        }
-      } catch (error) {
-        alert(`Failed to update auto user approval: ${error.message}`);
-        e.target.checked = !e.target.checked; // revert toggle
-      }
-    });
-  }
+      alert(`Auto User Approval set to: ${newValue}`)
+    } catch (error) {
+      alert(`Failed to update setting: ${error.message}`)
+      e.target.checked = !e.target.checked // Revert toggle on error
+    }
+  })
 }
 
 async function updateUserStatus(userId, newStatus) {
