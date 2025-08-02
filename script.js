@@ -311,100 +311,100 @@
 
   // --- System Settings ---
   async function renderSystemSettings() {
-    const systemSettingsTableBody = document.getElementById("system-settings-table-body")
-    if (!systemSettingsTableBody) return
+  const systemSettingsTableBody = document.getElementById("system-settings-table-body");
+  if (!systemSettingsTableBody) return;
 
-    systemSettingsTableBody.innerHTML = ""
+  systemSettingsTableBody.innerHTML = "";
 
-    try {
-      const systemSettings = await fetchApi("/admin/settings", "GET", null, true)
+  try {
+    const systemSettings = await fetchApi("/admin/settings", "GET", null, true);
 
-      systemSettings.forEach((setting) => {
-        const row = systemSettingsTableBody.insertRow()
-        const isCheckbox = setting.key.includes("approval") // you can enhance this check
-        const inputType = isCheckbox ? "checkbox" : "text"
-        const inputId = `setting-value-${setting.key}`
-        const inputValue = setting.value
+    systemSettings.forEach((setting) => {
+      const row = systemSettingsTableBody.insertRow();
+      const isCheckbox = setting.key.includes("approval"); // you can enhance this check
+      const inputType = isCheckbox ? "checkbox" : "text";
+      const inputId = `setting-value-${setting.key}`;
+      const inputValue = setting.value;
 
-        row.innerHTML = `
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-            ${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            <div class="relative inline-block w-14 h-8 align-middle select-none transition duration-200 ease-in">
-              <input type="${inputType}" id="${inputId}"
-                class="setting-value-input ${isCheckbox ? "sr-only" : "border border-gray-300 rounded-md p-1 w-full"}"
-                ${isCheckbox && inputValue === "true" ? "checked" : ""}
-                ${!isCheckbox ? `value="${inputValue}"` : ""}>
-              ${
-                isCheckbox
-                  ? `
-                <div class="toggle-bg absolute top-0 left-0 w-14 h-8 bg-gray-600 rounded-full transition"></div>
-                <div class="toggle-dot absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition"></div>
-              `
-                  : ""
-              }
-            </div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <button id="save-setting-${setting.key}" class="save-setting-btn text-indigo-600 hover:text-indigo-900 ml-2">
-              Save
-            </button>
-          </td>
-        `
-
-        const input = row.querySelector(`#${inputId}`)
-        const toggleBg = row.querySelector(".toggle-bg")
-        const toggleDot = row.querySelector(".toggle-dot")
-
-        if (isCheckbox) {
-          const updateToggle = (checked) => {
-            if (checked) {
-              toggleBg.classList.remove("bg-gray-600")
-              toggleBg.classList.add("bg-green-500")
-              toggleDot.classList.add("translate-x-full")
-            } else {
-              toggleBg.classList.remove("bg-green-500")
-              toggleBg.classList.add("bg-gray-600")
-              toggleDot.classList.remove("translate-x-full")
+      row.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          ${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          <div class="relative inline-block w-14 h-8 align-middle select-none transition duration-200 ease-in">
+            <input type="${inputType}" id="${inputId}"
+              class="setting-value-input ${isCheckbox ? "sr-only" : "border border-gray-300 rounded-md p-1 w-full"}"
+              ${isCheckbox && inputValue === "true" ? "checked" : ""}
+              ${!isCheckbox ? `value="${inputValue}"` : ""}>
+            ${
+              isCheckbox
+                ? `
+              <div class="toggle-bg absolute top-0 left-0 w-14 h-8 bg-gray-600 rounded-full transition-colors duration-300 ease-in-out"></div>
+              <div class="toggle-dot absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 ease-in-out"></div>
+            `
+                : ""
             }
+          </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <button id="save-setting-${setting.key}" class="save-setting-btn text-indigo-600 hover:text-indigo-900 ml-2">
+            Save
+          </button>
+        </td>
+      `;
+
+      const input = row.querySelector(`#${inputId}`);
+      const toggleBg = row.querySelector(".toggle-bg");
+      const toggleDot = row.querySelector(".toggle-dot");
+
+      if (isCheckbox) {
+        const updateToggle = (checked) => {
+          if (checked) {
+            toggleBg.classList.remove("bg-gray-600");
+            toggleBg.classList.add("bg-green-500");
+            toggleDot.classList.add("translate-x-full");
+          } else {
+            toggleBg.classList.remove("bg-green-500");
+            toggleBg.classList.add("bg-gray-600");
+            toggleDot.classList.remove("translate-x-full");
           }
+        };
 
-          updateToggle(input.checked)
+        updateToggle(input.checked);
 
-          input.addEventListener("change", () => {
-            updateToggle(input.checked)
-          })
+        input.addEventListener("change", () => {
+          updateToggle(input.checked);
+        });
+      }
+
+      const saveBtn = row.querySelector(`#save-setting-${setting.key}`);
+      saveBtn.addEventListener("click", async () => {
+        const newValue = isCheckbox ? input.checked.toString() : input.value.trim();
+
+        try {
+          await fetchApi(
+            "/admin/settings",
+            "PUT",
+            {
+              key: setting.key,
+              value: newValue,
+            },
+            true
+          );
+
+          alert(`Setting "${setting.key}" updated successfully`);
+        } catch (error) {
+          console.error("Save error:", error);
+          alert(`Failed to update "${setting.key}"`);
         }
-
-        const saveBtn = row.querySelector(`#save-setting-${setting.key}`)
-        saveBtn.addEventListener("click", async () => {
-          const newValue = isCheckbox ? input.checked.toString() : input.value.trim()
-
-          try {
-            await fetchApi(
-              "/admin/settings",
-              "PUT",
-              {
-                key: setting.key,
-                value: newValue,
-              },
-              true,
-            )
-
-            alert(`Setting "${setting.key}" updated successfully`)
-          } catch (error) {
-            console.error("Save error:", error)
-            alert(`Failed to update "${setting.key}"`)
-          }
-        })
-      })
-    } catch (err) {
-      console.error("Failed to load system settings:", err)
-      alert("Could not load system settings.")
-    }
+      });
+    });
+  } catch (err) {
+    console.error("Failed to load system settings:", err);
+    alert("Could not load system settings.");
   }
-
+  }
+  
   // --- User Management ---
   async function renderUserManagement() {
     if (!userManagementTableBody) return
