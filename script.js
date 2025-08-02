@@ -635,48 +635,86 @@ async function renderAgentManagement() {
 
 // --- Survey Management ---
 async function renderSurveyManagement() {
+  const surveyManagementTableBody = document.getElementById("surveyManagementTableBody")
   if (!surveyManagementTableBody) return
+
   surveyManagementTableBody.innerHTML = ""
+
   try {
-    surveys = await fetchApi("/admin/surveys", "GET", null, true) // Fetch all surveys for admin
+    const surveys = await fetchApi("/admin/surveys", "GET", null, true) // Fetch all surveys for admin
 
     surveys.forEach((survey) => {
       const row = surveyManagementTableBody.insertRow()
       row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${survey.title}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${survey.points_reward}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${survey.is_active ? "Active" : "Inactive"}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(survey.created_at).toLocaleDateString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <!-- Add action buttons for surveys if needed (e.g., edit, activate/deactivate) -->
-            </td>
-        `
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${survey.title}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${survey.points_reward}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${survey.is_active ? "Active" : "Inactive"}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(survey.created_at).toLocaleDateString()}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <button 
+            class="text-indigo-600 hover:text-indigo-900 toggle-survey-btn"
+            data-id="${survey.id}" 
+            data-status="${survey.is_active}">
+            ${survey.is_active ? "Deactivate" : "Activate"}
+          </button>
+        </td>
+      `
     })
+
+    // Attach click event for activate/deactivate
+    document.querySelectorAll(".toggle-survey-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const surveyId = btn.getAttribute("data-id")
+        const currentStatus = btn.getAttribute("data-status") === "true"
+        const newStatus = !currentStatus
+
+        try {
+          await fetchApi(`/admin/surveys/${surveyId}/status`, "PUT", { is_active: newStatus }, true)
+          alert(`Survey has been ${newStatus ? "activated" : "deactivated"}.`)
+          renderSurveyManagement() // Refresh table
+        } catch (err) {
+          alert("Failed to update survey status.")
+          console.error(err)
+        }
+      })
+    })
+
   } catch (error) {
     console.error("Failed to fetch surveys:", error)
-    alert(`Failed to load survey data: ${error.message}`)
+    alert(`Failed to load survey data: ${error?.message || "Unknown error"}`)
   }
 }
 
 // --- Point Transfers ---
 async function renderPointTransfers() {
+  const pointTransfersTableBody = document.getElementById("pointTransfersTableBody")
   if (!pointTransfersTableBody) return
+
   pointTransfersTableBody.innerHTML = ""
+
   try {
-    pointTransfers = await fetchApi("/admin/point-transfers", "GET", null, true) // Admin endpoint for all point transfers
+    const pointTransfers = await fetchApi("/admin/point-transfers", "GET", null, true)
 
     pointTransfers.forEach((transfer) => {
       const row = pointTransfersTableBody.insertRow()
       row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${transfer.from_user.email}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transfer.to_user.email}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transfer.amount}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(transfer.created_at).toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <!-- Add action buttons for point transfers if needed -->
-            </td>
-        `
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${transfer.from_user?.email || "N/A"}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transfer.to_user?.email || "N/A"}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transfer.amount}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(transfer.created_at).toLocaleString()}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <!-- Optional actions like "Revoke" or "View Detail" can go here -->
+        </td>
+      `
     })
+
+    // Handle empty list
+    if (pointTransfers.length === 0) {
+      const row = pointTransfersTableBody.insertRow()
+      row.innerHTML = `
+        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No point transfers yet.</td>
+      `
+    }
   } catch (error) {
     console.error("Failed to fetch point transfers:", error)
     alert(`Failed to load point transfer data: ${error.message}`)
@@ -684,30 +722,43 @@ async function renderPointTransfers() {
 }
 
 function setupSendPointsForm() {
+  const sendPointsForm = document.getElementById("sendPointsForm") // Ensure this matches your form's ID
+
   if (sendPointsForm) {
     sendPointsForm.addEventListener("submit", async (e) => {
       e.preventDefault()
-      const receiverEmail = document.getElementById("receiver-email").value
-      const amount = Number.parseFloat(document.getElementById("transfer-amount").value) // Use parseFloat for Decimal
+
+      const receiverEmail = document.getElementById("receiver-email")?.value?.trim()
+      const amount = parseFloat(document.getElementById("transfer-amount")?.value)
 
       if (!receiverEmail || isNaN(amount) || amount <= 0) {
-        alert("Please enter a valid receiver email and amount.")
+        alert("Please enter a valid receiver email and amount greater than 0.")
         return
       }
 
       try {
-        await fetchApi("/points/transfer", "POST", { to_email: receiverEmail, amount: amount }, true)
-        alert(`Successfully sent ${amount} points to ${receiverEmail}.`)
+        await fetchApi(
+          "/points/transfer",
+          "POST",
+          { to_email: receiverEmail, amount },
+          true // Auth required
+        )
+
+        alert(`✅ Successfully sent ${amount} points to ${receiverEmail}.`)
         sendPointsForm.reset()
-        renderPointTransfers()
-        renderDashboardOverview()
+
+        // Refresh tables if they exist
+        if (typeof renderPointTransfers === "function") renderPointTransfers()
+        if (typeof renderDashboardOverview === "function") renderDashboardOverview()
       } catch (error) {
-        alert(`Failed to send points: ${error.message}`)
+        console.error("Transfer error:", error)
+        alert(`❌ Failed to send points: ${error.message}`)
       }
     })
+  } else {
+    console.warn("⚠️ sendPointsForm not found on the page.")
   }
 }
-
 // --- Redemption Requests ---
 async function renderRedemptionRequests() {
   if (!redemptionRequestsTableBody) return
