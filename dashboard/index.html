@@ -196,41 +196,51 @@
       </section>
 
       <section id="user-management-section" class="section-content">
-        <h2 class="text-3xl font-bold mb-6">User Management</h2>
-        <div class="card mb-6">
-          <h3 class="text-xl font-semibold mb-4">User List</h3>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="table-header sortable-header" data-sort-by="name">Full Name</th>
-                  <th class="table-header sortable-header" data-sort-by="email">Email</th>
-                  <th class="table-header sortable-header" data-sort-by="status">Status</th>
-                  <th class="table-header sortable-header" data-sort-by="role">Role</th>
-                  <th class="table-header">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="user-management-table-body" class="bg-white divide-y divide-gray-200">
-                <!-- User data will be inserted here by JS -->
-              </tbody>
-            </table>
-          </div>
+  <h2 class="text-3xl font-bold mb-6">User Management</h2>
+
+  <!-- User List Card -->
+  <div class="card mb-6">
+    <h3 class="text-xl font-semibold mb-4">User List</h3>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="table-header sortable-header" data-sort-by="name">Full Name</th>
+            <th class="table-header sortable-header" data-sort-by="email">Email</th>
+            <th class="table-header sortable-header" data-sort-by="status">Status</th>
+            <th class="table-header sortable-header" data-sort-by="role">Role</th>
+            <th class="table-header">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="user-management-table-body" class="bg-white divide-y divide-gray-200">
+          <!-- User data will be inserted here by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Global User Actions Card -->
+  <div class="card">
+    <h3 class="text-xl font-semibold mb-4">Global User Actions</h3>
+
+    <!-- Toggle UI -->
+    <div class="flex items-center mb-4">
+      <label for="auto-user-approval-toggle" class="text-gray-700 mr-3">Auto User Approval:</label>
+      <label class="relative inline-block w-14 h-8">
+        <input type="checkbox" id="auto-user-approval-toggle" class="sr-only peer" />
+        <div class="block bg-gray-400 peer-checked:bg-green-500 w-14 h-8 rounded-full transition-colors duration-300"></div>
+        <div
+          class="absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-all duration-300 peer-checked:translate-x-6">
         </div>
-        <div class="card">
-          <h3 class="text-xl font-semibold mb-4">Global User Actions</h3>
-          <div class="flex items-center mb-4">
-            <label for="auto-user-approval-toggle" class="text-gray-700 mr-3">Auto User Approval:</label>
-            <div class="relative inline-block w-14 h-8 align-middle select-none transition duration-200 ease-in">
-              <input type="checkbox" name="auto-user-approval" id="auto-user-approval-toggle" class="sr-only" />
-              <div class="block bg-gray-600 w-14 h-8 rounded-full toggle-bg"></div>
-              <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition toggle-dot"></div>
-            </div>
-          </div>
-          <div class="flex space-x-4">
-            <button id="approve-all-pending-users-btn" class="btn btn-primary">Approve All Pending</button>
-            <button id="reject-all-pending-users-btn" class="btn btn-danger">Reject All Pending</button>
-          </div>
-        </div>
+      </label>
+    </div>
+
+    <!-- Approve/Reject Buttons -->
+    <div class="flex space-x-4">
+      <button id="approve-all-pending-users-btn" class="btn btn-primary">Approve All Pending</button>
+      <button id="reject-all-pending-users-btn" class="btn btn-danger">Reject All Pending</button>
+    </div>
+  </div>
       </section>
 
       <section id="agent-management-section" class="section-content">
@@ -356,24 +366,39 @@
       </section>
 
       <section id="system-settings-section" class="section-content">
-        <h2 class="text-3xl font-bold mb-6">System Settings</h2>
-        <div class="card">
-          <h3 class="text-xl font-semibold mb-4">Configuration</h3>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="table-header">Setting Key</th>
-                  <th class="table-header">Value</th>
-                  <th class="table-header">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="system-settings-table-body" class="bg-white divide-y divide-gray-200">
-                <!-- System settings will be inserted here by JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
+  <h2 class="text-3xl font-bold mb-6">System Settings</h2>
+  <div class="card">
+    <h3 class="text-xl font-semibold mb-4">Configuration</h3>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="table-header">Setting Key</th>
+            <th class="table-header">Value</th>
+            <th class="table-header">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="system-settings-table-body" class="bg-white divide-y divide-gray-200">
+          <!-- Example setting row, dynamically inserted by JS -->
+          <tr data-key="auto_approval">
+            <td class="px-4 py-2 font-medium text-gray-800">Auto Approval</td>
+            <td class="px-4 py-2">
+              <label class="relative inline-block w-14 h-8">
+                <input type="checkbox" class="sr-only setting-toggle" id="auto-approval-toggle" />
+                <div class="block bg-gray-400 w-14 h-8 rounded-full toggle-bg"></div>
+                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition toggle-dot"></div>
+              </label>
+              <span id="auto-approval-status" class="ml-3 text-sm font-semibold text-gray-700">OFF</span>
+            </td>
+            <td class="px-4 py-2">
+              <button class="btn btn-primary save-setting-btn" data-setting="auto_approval">Save</button>
+            </td>
+          </tr>
+          <!-- Add more setting rows here dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </div>
       </section>
     </div>
 
