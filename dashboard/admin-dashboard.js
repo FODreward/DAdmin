@@ -183,25 +183,25 @@ document.addEventListener("DOMContentLoaded", () => {
         row.innerHTML = `
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <label class="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox"
-                             id="setting-value-${setting.key}"
-                             class="sr-only peer setting-value-input"
-                             ${isCheckbox && isChecked ? "checked" : ""}>
-                      ${
-                        isCheckbox
-                          ? `
-                          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                          <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Toggle</span>
-                      `
-                          : `
-                          <input type="text"
+                  ${
+                    isCheckbox
+                      ? `
+                      <label class="relative inline-block w-14 h-8 align-middle select-none transition duration-200 ease-in">
+                          <input type="checkbox"
                                  id="setting-value-${setting.key}"
-                                 class="border border-gray-300 rounded-md p-1 w-full text-gray-900 bg-white dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600"
-                                 value="${setting.value}">
-                      `
-                      }
-                  </label>
+                                 class="sr-only setting-value-input"
+                                 ${isChecked ? "checked" : ""}>
+                          <div class="block w-14 h-8 rounded-full toggle-bg ${isChecked ? "bg-green-500" : "bg-gray-600"}"></div>
+                          <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition transform ${isChecked ? "translate-x-full" : ""} toggle-dot"></div>
+                      </label>
+                  `
+                      : `
+                      <input type="text"
+                             id="setting-value-${setting.key}"
+                             class="border border-gray-300 rounded-md p-1 w-full text-gray-900 bg-white dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600"
+                             value="${setting.value}">
+                  `
+                  }
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button id="save-setting-${setting.key}" class="save-setting-btn text-indigo-600 hover:text-indigo-900 ml-2">Save</button>
@@ -231,6 +231,30 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error(`Error saving setting ${key}:`, error)
           }
         })
+      })
+
+      // Attach event listeners for the toggle switches (if any)
+      systemSettings.forEach((setting) => {
+        if (setting.key === "auto_user_approval") {
+          const input = document.getElementById(`setting-value-${setting.key}`)
+          if (input) {
+            // Ensure the input element exists
+            const toggleBg = input.nextElementSibling // The div with toggle-bg class
+            const toggleDot = toggleBg.nextElementSibling // The div with toggle-dot class
+
+            input.addEventListener("change", (e) => {
+              if (e.target.checked) {
+                toggleBg.classList.remove("bg-gray-600")
+                toggleBg.classList.add("bg-green-500")
+                toggleDot.classList.add("translate-x-full")
+              } else {
+                toggleBg.classList.remove("bg-green-500")
+                toggleBg.classList.add("bg-gray-600")
+                toggleDot.classList.remove("translate-x-full")
+              }
+            })
+          }
+        }
       })
     } catch (error) {
       console.error("Failed to fetch system settings:", error)
