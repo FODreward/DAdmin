@@ -3,8 +3,17 @@
 // `SESSION_KEY_TOKEN`, `SESSION_KEY_USER_DATA` are available globally from script.js.
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Only initialize if we are on a dashboard page
-  if (!window.location.pathname.includes("/dashboard/")) {
+  // Only initialize if we are on the admin dashboard page
+  // This check assumes the admin dashboard is at /dashboard/admin.html
+  if (!window.location.pathname.includes("/dashboard/admin.html")) {
+    return
+  }
+
+  // Ensure user is admin, otherwise redirect
+  const session = window.getSession()
+  if (!session || !session.currentUser || !session.currentUser.is_admin) {
+    alert("Access Denied: You must be an administrator to view this page.")
+    window.location.href = "/login.html" // Redirect to login page
     return
   }
 
@@ -26,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pointTransfersTableBody,
     redemptionRequestsTableBody,
     activityLogTableBody
-  let autoUserApprovalToggle, approveAllPendingUsersBtn, rejectAllPendingUsersBtn
+  let approveAllPendingUsersBtn, rejectAllPendingUsersBtn
   let sendPointsForm
   let logoutButton
   let createSurveyForm // New element for survey creation
@@ -52,7 +61,6 @@ document.addEventListener("DOMContentLoaded", () => {
     redemptionRequestsTableBody = document.getElementById("redemption-requests-table-body")
     activityLogTableBody = document.getElementById("activity-log-table-body")
 
-    autoUserApprovalToggle = document.getElementById("auto-user-approval-toggle")
     approveAllPendingUsersBtn = document.getElementById("approve-all-pending-users-btn")
     rejectAllPendingUsersBtn = document.getElementById("reject-all-pending-users-btn")
 
@@ -162,75 +170,51 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- System Settings ---
   async function renderSystemSettings() {
     if (!systemSettingsTableBody) return
-    systemSettingsTableBody.innerHTML = ""
+    systemSettingsTableBody.innerHTML = "" // Clear existing content
     try {
       systemSettings = await window.fetchApi("/admin/settings", "GET", null, true)
 
       systemSettings.forEach((setting) => {
         const row = systemSettingsTableBody.insertRow()
-        const isCheckbox = setting.key.includes("approval")
-        const inputType = isCheckbox ? "checkbox" : "text"
-        const inputValue = isCheckbox ? (setting.value === "true" ? "checked" : "") : setting.value
+        // Explicitly check for 'auto_user_approval' key for checkbox rendering
+        const isCheckbox = setting.key === "auto_user_approval"
+        const isChecked = setting.value === "true" // Determine checked state for checkboxes
 
         row.innerHTML = `
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <input type="${inputType}"
-                         id="setting-value-${setting.key}"
-                         class="setting-value-input ${isCheckbox ? "sr-only" : "border border-gray-300 rounded-md p-1 w-full"}"
-                         value="${inputValue}"
-                         ${inputValue}>
-                  ${isCheckbox ? `<div class="block bg-gray-600 w-14 h-8 rounded-full toggle-bg"></div><div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition toggle-dot"></div>` : ""}
+                  <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox"
+                             id="setting-value-${setting.key}"
+                             class="sr-only peer setting-value-input"
+                             ${isCheckbox && isChecked ? "checked" : ""}>
+                      ${
+                        isCheckbox
+                          ? `
+                          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                          <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Toggle</span>
+                      `
+                          : `
+                          <input type="text"
+                                 id="setting-value-${setting.key}"
+                                 class="border border-gray-300 rounded-md p-1 w-full text-gray-900 bg-white dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600"
+                                 value="${setting.value}">
+                      `
+                      }
+                  </label>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button id="save-setting-${setting.key}" class="save-setting-btn text-indigo-600 hover:text-indigo-900 ml-2">Save</button>
               </td>
           `
-        if (isCheckbox) {
-          const input = row.querySelector(`#setting-value-${setting.key}`)
-          const toggleBg = row.querySelector(".toggle-bg")
-          const toggleDot = row.querySelector(".toggle-dot")
-          input.parentNode.classList.add(
-            "relative",
-            "inline-block",
-            "w-14",
-            "h-8",
-            "align-middle",
-            "select-none",
-            "transition",
-            "duration-200",
-            "ease-in",
-          )
-
-          if (input.checked) {
-            toggleBg.classList.remove("bg-gray-600")
-            toggleBg.classList.add("bg-green-500")
-            toggleDot.classList.add("translate-x-full")
-          } else {
-            toggleBg.classList.remove("bg-green-500")
-            toggleBg.classList.add("bg-gray-600")
-            toggleDot.classList.remove("translate-x-full")
-          }
-
-          input.addEventListener("change", (e) => {
-            if (e.target.checked) {
-              toggleBg.classList.remove("bg-gray-600")
-              toggleBg.classList.add("bg-green-500")
-              toggleDot.classList.add("translate-x-full")
-            } else {
-              toggleBg.classList.remove("bg-green-500")
-              toggleBg.classList.add("bg-gray-600")
-              toggleDot.classList.remove("translate-x-full")
-            }
-          })
-        }
       })
 
+      // Attach event listeners for saving settings
       document.querySelectorAll(".save-setting-btn").forEach((button) => {
         button.addEventListener("click", async (e) => {
           const key = e.target.id.replace("save-setting-", "")
           const input = document.getElementById(`setting-value-${key}`)
-          const newValue = input.type === "checkbox" ? input.checked.toString() : input.value
+          const newValue = input.type === "checkbox" ? input.checked.toString() : input.value.trim()
           const setting = systemSettings.find((s) => s.key === key)
 
           try {
@@ -244,6 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderSystemSettings() // Re-render to reflect changes
           } catch (error) {
             alert(`Failed to save setting: ${error.message}`)
+            console.error(`Error saving setting ${key}:`, error)
           }
         })
       })
@@ -259,26 +244,6 @@ document.addEventListener("DOMContentLoaded", () => {
     userManagementTableBody.innerHTML = ""
     try {
       users = await window.fetchApi("/admin/users", "GET", null, true)
-
-      // Handle auto-user-approval toggle initial state
-      const autoApprovalSetting = systemSettings.find((s) => s.key === "auto_user_approval")
-      if (autoUserApprovalToggle && autoApprovalSetting) {
-        const isChecked = autoApprovalSetting.value === "true"
-        autoUserApprovalToggle.checked = isChecked
-
-        const toggleBg = autoUserApprovalToggle.nextElementSibling
-        const toggleDot = toggleBg.nextElementSibling
-
-        if (isChecked) {
-          toggleBg.classList.remove("bg-gray-600")
-          toggleBg.classList.add("bg-green-500")
-          toggleDot.classList.add("translate-x-full")
-        } else {
-          toggleBg.classList.remove("bg-green-500")
-          toggleBg.classList.add("bg-gray-600")
-          toggleDot.classList.remove("translate-x-full")
-        }
-      }
 
       users.forEach((user) => {
         const row = userManagementTableBody.insertRow()
@@ -378,41 +343,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           } else {
             alert("No pending users to reject.")
-          }
-        })
-      }
-
-      // Auto-user-approval toggle listener
-      if (autoUserApprovalToggle) {
-        autoUserApprovalToggle.addEventListener("change", async (e) => {
-          const newValue = e.target.checked.toString()
-          try {
-            await window.fetchApi(
-              "/admin/settings",
-              "PUT",
-              {
-                key: "auto_user_approval",
-                value: newValue,
-                description: "Automatically approve new user registrations",
-              },
-              true,
-            )
-            alert(`Auto User Approval set to: ${newValue}`)
-            const toggleBg = autoUserApprovalToggle.nextElementSibling
-            const toggleDot = toggleBg.nextElementSibling
-
-            if (e.target.checked) {
-              toggleBg.classList.remove("bg-gray-600")
-              toggleBg.classList.add("bg-green-500")
-              toggleDot.classList.add("translate-x-full")
-            } else {
-              toggleBg.classList.remove("bg-green-500")
-              toggleBg.classList.add("bg-gray-600")
-              toggleDot.classList.remove("translate-x-full")
-            }
-          } catch (error) {
-            alert(`Failed to update auto user approval: ${error.message}`)
-            e.target.checked = !e.target.checked // Revert state on failure
           }
         })
       }
@@ -718,7 +648,7 @@ document.addEventListener("DOMContentLoaded", () => {
       logoutButton.addEventListener("click", () => {
         alert("Logging out...")
         window.clearSession()
-        window.location.href = "/" // Redirect to root login page
+        window.location.href = "/login.html" // Redirect to login page
       })
     }
   }
