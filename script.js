@@ -513,7 +513,7 @@
 
   // Add this new function:
   async function setupUserManagementListeners() {
-  const toggle = document.getElementById("autoUserApprovalToggle")
+  const toggle = document.getElementById("auto-user-approval-toggle")
   if (!toggle) return
 
   // Load current setting
