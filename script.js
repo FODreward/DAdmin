@@ -311,7 +311,7 @@
 
   // --- System Settings ---
   async function renderSystemSettings() {
-    const systemSettingsTableBody = document.getElementById("systemSettingsTableBody")
+    const systemSettingsTableBody = document.getElementById("system-settings-table-body")
     if (!systemSettingsTableBody) return
 
     systemSettingsTableBody.innerHTML = ""
