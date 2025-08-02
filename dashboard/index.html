@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Survey Reward System</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+
+  <!-- Top Navbar -->
+  <header class="bg-white shadow-md py-4 px-6 flex justify-between items-center fixed top-0 left-0 right-0 z-50">
+      <h1 class="text-2xl font-bold text-gray-800">Admin Panel</h1>
+      <button id="logout-button" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md transition duration-300">Logout</button>
+  </header>
+
+  <!-- Main Layout Container -->
+  <div class="flex h-screen pt-16"> <!-- pt-16 to offset fixed navbar -->
+
+      <!-- Collapsible Sidebar -->
+      <nav id="sidebar" class="sidebar bg-gray-800 text-white flex flex-col fixed left-0 top-16 bottom-0 z-40">
+          <div class="p-4 flex items-center justify-end">
+              <button id="sidebar-toggle" class="text-white p-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600">
+                  <svg class="w-6 h-6 sidebar-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+              </button>
+          </div>
+          <ul class="flex-1 overflow-y-auto">
+              <li class="mb-2">
+                  <a href="#" id="dashboard-overview-link" class="flex items-center p-4 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md mx-2 transition duration-200">
+                      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                      <span class="ml-3 sidebar-link-text">Dashboard Overview</span>
+                  </a>
+              </li>
+              <li class="mb-2">
+                  <a href="#" id="system-settings-link" class="flex items-center p-4 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md mx-2 transition duration-200">
+                      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                      <span class="ml-3 sidebar-link-text">System Settings</span>
+                  </a>
+              </li>
+              <li class="mb-2">
+                  <a href="#" id="user-management-link" class="flex items-center p-4 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md mx-2 transition duration-200">
+                      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H2v-2a4 4 0 014-4h12.713A4 4 0 0122 18v2M9 6a3 3 0 11-6 0 3 3 0 016 0zm12.292 7.578A4 4 0 0017 10a4 4 0 00-2.292 2.578m-9.994-1.078a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                      <span class="ml-3 sidebar-link-text">User Management</span>
+                  </a>
+              </li>
+              <li class="mb-2">
+                  <a href="#" id="agent-management-link" class="flex items-center p-4 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md mx-2 transition duration-200">
+                      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M12 20.053a9.75 9.75 0 007.554-3.262A9.75 9.75 0 0012 10.354a9.75 9.75 0 00-7.554 3.262A9.75 9.75 0 0012 20.053z"></path></svg>
+                      <span class="ml-3 sidebar-link-text">Agent Management</span>
+                  </a>
+              </li>
+              <li class="mb-2">
+                  <a href="#" id="survey-management-link" class="flex items-center p-4 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md mx-2 transition duration-200">
+                      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                      <span class="ml-3 sidebar-link-text">Survey Management</span>
+                  </a>
+              </li>
+              <li class="mb-2">
+                  <a href="#" id="point-transfers-link" class="flex items-center p-4 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md mx-2 transition duration-200">
+                      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                      <span class="ml-3 sidebar-link-text">Point Transfers</span>
+                  </a>
+              </li>
+              <li class="mb-2">
+                  <a href="#" id="redemption-requests-link" class="flex items-center p-4 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md mx-2 transition duration-200">
+                      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-6 6l-6-6m6 6l6 6m-6-6l-6 6"></path></svg>
+                      <span class="ml-3 sidebar-link-text">Redemption Requests</span>
+                  </a>
+              </li>
+          </ul>
+      </nav>
+
+      <!-- Main Content Area -->
+      <main id="main-content" class="main-content flex-1 p-6 overflow-y-auto bg-gray-50">
+          <!-- Dashboard Overview Section -->
+          <section id="dashboard-overview-section" class="section-content active">
+              <h2 class="text-3xl font-semibold text-gray-800 mb-6">Dashboard Overview</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                  <div class="bg-white p-6 rounded-lg shadow-md">
+                      <h3 class="text-lg font-medium text-gray-600">Total Users</h3>
+                      <p class="text-4xl font-bold text-gray-900 mt-2" id="total-users-card">1,234</p>
+                  </div>
+                  <div class="bg-white p-6 rounded-lg shadow-md">
+                      <h3 class="text-lg font-medium text-gray-600">Surveys Completed</h3>
+                      <p class="text-4xl font-bold text-gray-900 mt-2" id="total-surveys-card">5,678</p>
+                  </div>
+                  <div class="bg-white p-6 rounded-lg shadow-md">
+                      <h3 class="text-lg font-medium text-gray-600">Points Distributed</h3>
+                      <p class="text-4xl font-bold text-gray-900 mt-2" id="total-points-card">123,456</p>
+                  </div>
+                  <div class="bg-white p-6 rounded-lg shadow-md">
+                      <h3 class="text-lg font-medium text-gray-600">Pending Redemptions</h3>
+                      <p class="text-4xl font-bold text-gray-900 mt-2" id="pending-redemptions-card">12</p>
+                  </div>
+                  <div class="bg-white p-6 rounded-lg shadow-md">
+                      <h3 class="text-lg font-medium text-gray-600">Reward Percentage</h3>
+                      <p class="text-4xl font-bold text-gray-900 mt-2" id="reward-percentage-card">85%</p>
+                  </div>
+              </div>
+          </section>
+
+          <!-- System Settings Section -->
+          <section id="system-settings-section" class="section-content">
+              <h2 class="text-3xl font-semibold text-gray-800 mb-6">System Settings</h2>
+              <div class="bg-white p-6 rounded-lg shadow-md">
+                  <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-50">
+                          <tr>
+                              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Setting Key</th>
+                              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Setting Value</th>
+                              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody id="system-settings-table-body" class="bg-white divide-y divide-gray-200">
+                          <!-- Settings will be populated by JS -->
+                      </tbody>
+                  </table>
+              </div>
+          </section>
+
+          <!-- User Management Section -->
+          <section id="user-management-section" class="section-content">
+              <h2 class="text-3xl font-semibold text-gray-800 mb-6">User Management</h2>
+              <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                  <div class="flex items-center justify-between mb-4">
+                      <label for="auto-user-approval-toggle" class="flex items-center cursor-pointer">
+                          <div class="relative">
+                              <input type="checkbox" id="auto-user-approval-toggle" class="sr-only">
+                              <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                              <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                          </div>
+                          <div class="ml-3 text-gray-700 font-medium">Auto User Approval</div>
+                      </label>
+                      <div class="flex space-x-4">
+                          <button id="approve-all-pending-users-btn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md transition duration-300">Approve All Pending Users</button>
+                          <button id="reject-all-pending-users-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md transition duration-300">Reject All Pending Users</button>
+                      </div>
+                  </div>
+                  <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-gray-200">
+                          <thead class="bg-gray-50">
+                              <tr>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="fullName">Full Name</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="email">Email</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="status">Status</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="role">Role</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                              </tr>
+                          </thead>
+                          <tbody id="user-management-table-body" class="bg-white divide-y divide-gray-200">
+                              <!-- Users will be populated by JS -->
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </section>
+
+          <!-- Agent Management Section -->
+          <section id="agent-management-section" class="section-content">
+              <h2 class="text-3xl font-semibold text-gray-800 mb-6">Agent Management</h2>
+              <div class="bg-white p-6 rounded-lg shadow-md">
+                  <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-gray-200">
+                          <thead class="bg-gray-50">
+                              <tr>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="name">Agent Name</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="referralCode">Referral Code</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="referredUsers">Referred Users</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                              </tr>
+                          </thead>
+                          <tbody id="agent-management-table-body" class="bg-white divide-y divide-gray-200">
+                              <!-- Agents will be populated by JS -->
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </section>
+
+          <!-- Survey Management Section -->
+          <section id="survey-management-section" class="section-content">
+              <h2 class="text-3xl font-semibold text-gray-800 mb-6">Survey Management</h2>
+              <div class="bg-white p-6 rounded-lg shadow-md">
+                  <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-gray-200">
+                          <thead class="bg-gray-50">
+                              <tr>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="title">Title</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="rewardPoints">Reward Points</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="status">Status</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="totalCompletions">Total Completions</th>
+                              </tr>
+                          </thead>
+                          <tbody id="survey-management-table-body" class="bg-white divide-y divide-gray-200">
+                              <!-- Surveys will be populated by JS -->
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </section>
+
+          <!-- Point Transfers Section -->
+          <section id="point-transfers-section" class="section-content">
+              <h2 class="text-3xl font-semibold text-gray-800 mb-6">Point Transfers</h2>
+              <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                  <h3 class="text-xl font-semibold text-gray-800 mb-4">Send Points to User</h3>
+                  <form id="send-points-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                          <label for="receiver-email" class="block text-sm font-medium text-gray-700">Receiver Email</label>
+                          <input type="email" id="receiver-email" name="receiverEmail" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                      </div>
+                      <div>
+                          <label for="transfer-amount" class="block text-sm font-medium text-gray-700">Amount</label>
+                          <input type="number" id="transfer-amount" name="transferAmount" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" min="1" required>
+                      </div>
+                      <div class="md:col-span-2">
+                          <button type="submit" id="send-points-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition duration-300">Send Points</button>
+                      </div>
+                  </form>
+              </div>
+              <div class="bg-white p-6 rounded-lg shadow-md">
+                  <h3 class="text-xl font-semibold text-gray-800 mb-4">Recent Transfers</h3>
+                  <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-gray-200">
+                          <thead class="bg-gray-50">
+                              <tr>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="sender">Sender</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="receiver">Receiver</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="amount">Amount</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="timestamp">Timestamp</th>
+                              </tr>
+                          </thead>
+                          <tbody id="point-transfers-table-body" class="bg-white divide-y divide-gray-200">
+                              <!-- Transfers will be populated by JS -->
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </section>
+
+          <!-- Redemption Requests Section -->
+          <section id="redemption-requests-section" class="section-content">
+              <h2 class="text-3xl font-semibold text-gray-800 mb-6">Redemption Requests</h2>
+              <div class="bg-white p-6 rounded-lg shadow-md">
+                  <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-gray-200">
+                          <thead class="bg-gray-50">
+                              <tr>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="user">User</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="amount">Amount</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="type">Type</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header" data-sort-by="status">Status</th>
+                                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                              </tr>
+                          </thead>
+                          <tbody id="redemption-requests-table-body" class="bg-white divide-y divide-gray-200">
+                              <!-- Requests will be populated by JS -->
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </section>
+      </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
