@@ -27,32 +27,35 @@ function protectRoute() {
   const isPinVerified = getSession(SESSION_KEY_PIN_VERIFIED)
   const currentPath = window.location.pathname
 
-  // If on login page, and already authenticated, redirect to PIN or Dashboard
-  if (currentPath.includes("login.html")) {
+  // If on root (login page), and already authenticated, redirect to PIN or Dashboard
+  if (currentPath === "/" || currentPath.includes("index.html")) {
+    // Covers root index.html
     if (isAuthenticated) {
       if (isPinVerified) {
-        window.location.href = "index.html" // Already verified, go to dashboard
+        window.location.href = "/dashboard/" // Already verified, go to dashboard folder
       } else {
-        window.location.href = "pin-verify.html" // Authenticated, but not PIN verified
+        window.location.href = "/pin/" // Authenticated, but not PIN verified, go to pin folder
       }
     }
     return // Stay on login page if not authenticated
   }
 
-  // If on PIN verify page
-  if (currentPath.includes("pin-verify.html")) {
+  // If on PIN verify page (inside /pin/ folder)
+  if (currentPath.includes("/pin/")) {
     if (!isAuthenticated) {
-      window.location.href = "login.html" // Not authenticated, go to login
+      window.location.href = "/" // Not authenticated, go to root login
     } else if (isPinVerified) {
-      window.location.href = "index.html" // Already PIN verified, go to dashboard
+      window.location.href = "/dashboard/" // Already PIN verified, go to dashboard folder
     }
     return // Stay on PIN page if authenticated but not verified
   }
 
-  // For dashboard (index.html) or any other protected page
-  if (!isAuthenticated || !isPinVerified) {
-    clearSession() // Clear any partial session data
-    window.location.href = "login.html" // Not authenticated or PIN verified, go to login
+  // For dashboard (inside /dashboard/ folder) or any other protected page
+  if (currentPath.includes("/dashboard/")) {
+    if (!isAuthenticated || !isPinVerified) {
+      clearSession() // Clear any partial session data
+      window.location.href = "/" // Not authenticated or PIN verified, go to root login
+    }
   }
 }
 
@@ -73,7 +76,7 @@ function handleLoginForm() {
         setSession(SESSION_KEY_AUTH, true)
         setSession(SESSION_KEY_TOKEN, "dummy_admin_token_123") // Simulate an access token
         errorMessageDiv.classList.add("hidden")
-        window.location.href = "pin-verify.html"
+        window.location.href = "/pin/" // Redirect to PIN verification in its folder
       } else {
         errorMessageDiv.textContent = "Invalid email or password."
         errorMessageDiv.classList.remove("hidden")
@@ -96,7 +99,7 @@ function handlePinForm() {
       if (pin === ADMIN_PIN) {
         setSession(SESSION_KEY_PIN_VERIFIED, true)
         errorMessageDiv.classList.add("hidden")
-        window.location.href = "index.html" // Redirect to dashboard
+        window.location.href = "/dashboard/" // Redirect to dashboard in its folder
       } else {
         errorMessageDiv.textContent = "Invalid PIN. Please try again."
         errorMessageDiv.classList.remove("hidden")
@@ -481,231 +484,4 @@ function renderAgentManagement() {
     row.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${agent.name}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${agent.referralCode}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${agent.referredUsers}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button id="revoke-agent-${agent.id}" class="action-btn revoke-agent-btn text-red-600 hover:text-red-900">Revoke Agent</button>
-            </td>
-        `
-  })
-
-  document.querySelectorAll(".revoke-agent-btn").forEach((button) => {
-    button.addEventListener("click", (e) => {
-      const agentId = e.target.id.replace("revoke-agent-", "")
-      revokeAgent(agentId)
-    })
-  })
-}
-
-function revokeAgent(agentId) {
-  const agentIndex = agents.findIndex((a) => a.id === agentId)
-  if (agentIndex !== -1) {
-    const agentName = agents[agentIndex].name
-    agents.splice(agentIndex, 1)
-    const user = users.find((u) => u.fullName === agentName)
-    if (user) {
-      user.role = "user"
-    }
-    alert(`Agent ${agentName} revoked.`)
-    renderAgentManagement()
-    renderUserManagement()
-  }
-}
-
-// --- Survey Management ---
-function renderSurveyManagement() {
-  if (!surveyManagementTableBody) return
-  surveyManagementTableBody.innerHTML = ""
-  surveys.forEach((survey) => {
-    const row = surveyManagementTableBody.insertRow()
-    row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${survey.title}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${survey.rewardPoints}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${survey.status}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${survey.totalCompletions}</td>
-        `
-  })
-}
-
-// --- Point Transfers ---
-function renderPointTransfers() {
-  if (!pointTransfersTableBody) return
-  pointTransfersTableBody.innerHTML = ""
-  pointTransfers.forEach((transfer) => {
-    const row = pointTransfersTableBody.insertRow()
-    row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${transfer.sender}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transfer.receiver}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transfer.amount}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${transfer.timestamp}</td>
-        `
-  })
-}
-
-function setupSendPointsForm() {
-  if (sendPointsForm) {
-    sendPointsForm.addEventListener("submit", (e) => {
-      e.preventDefault()
-      const receiverEmail = document.getElementById("receiver-email").value
-      const amount = Number.parseInt(document.getElementById("transfer-amount").value)
-
-      if (!receiverEmail || isNaN(amount) || amount <= 0) {
-        alert("Please enter a valid receiver email and amount.")
-        return
-      }
-
-      const receiverUser = users.find((u) => u.email === receiverEmail)
-      if (!receiverUser) {
-        alert("Receiver email does not exist in user records.")
-        return
-      }
-
-      const newTransfer = {
-        id: `transfer${pointTransfers.length + 1}`,
-        sender: "Admin",
-        receiver: receiverEmail,
-        amount: amount,
-        timestamp: new Date().toLocaleString(),
-      }
-      pointTransfers.push(newTransfer)
-      alert(`Successfully sent ${amount} points to ${receiverEmail}.`)
-      sendPointsForm.reset()
-      renderPointTransfers()
-      renderDashboardOverview()
-    })
-  }
-}
-
-// --- Redemption Requests ---
-function renderRedemptionRequests() {
-  if (!redemptionRequestsTableBody) return
-  redemptionRequestsTableBody.innerHTML = ""
-  redemptionRequests.forEach((request) => {
-    const row = redemptionRequestsTableBody.insertRow()
-    row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.user}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.amount}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.type}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${request.status}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                ${request.status === "pending" ? `<button id="approve-redemption-${request.id}" class="action-btn approve-redemption-btn text-green-600 hover:text-green-900 mr-2">Approve</button>` : ""}
-                ${request.status === "pending" ? `<button id="reject-redemption-${request.id}" class="action-btn reject-redemption-btn text-red-600 hover:text-red-900">Reject</button>` : ""}
-            </td>
-        `
-  })
-
-  document.querySelectorAll(".approve-redemption-btn").forEach((button) => {
-    button.addEventListener("click", (e) => {
-      const requestId = e.target.id.replace("approve-redemption-", "")
-      updateRedemptionStatus(requestId, "approved")
-    })
-  })
-  document.querySelectorAll(".reject-redemption-btn").forEach((button) => {
-    button.addEventListener("click", (e) => {
-      const requestId = e.target.id.replace("reject-redemption-", "")
-      updateRedemptionStatus(requestId, "rejected")
-    })
-  })
-}
-
-function updateRedemptionStatus(requestId, newStatus) {
-  const requestIndex = redemptionRequests.findIndex((r) => r.id === requestId)
-  if (requestIndex !== -1) {
-    redemptionRequests[requestIndex].status = newStatus
-    alert(`Redemption request ${requestId} status updated to ${newStatus}.`)
-    renderRedemptionRequests()
-    renderDashboardOverview()
-  }
-}
-
-// --- Table Sorting Logic ---
-function setupTableSorting() {
-  document.querySelectorAll(".sortable-header").forEach((header) => {
-    header.addEventListener("click", () => {
-      const table = header.closest("table")
-      const tbody = table.querySelector("tbody")
-      const rows = Array.from(tbody.querySelectorAll("tr"))
-      const sortBy = header.dataset.sortBy
-      const isAsc = header.classList.contains("asc")
-
-      table.querySelectorAll(".sortable-header").forEach((h) => {
-        h.classList.remove("asc", "desc")
-      })
-
-      const newIsAsc = !isAsc
-      header.classList.add(newIsAsc ? "asc" : "desc")
-
-      rows.sort((a, b) => {
-        const aText = a
-          .querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`)
-          .textContent.trim()
-        const bText = b
-          .querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`)
-          .textContent.trim()
-
-        let valA = aText
-        let valB = bText
-
-        if (
-          !isNaN(Number.parseFloat(aText)) &&
-          isFinite(aText) &&
-          !isNaN(Number.parseFloat(bText)) &&
-          isFinite(bText)
-        ) {
-          valA = Number.parseFloat(aText)
-          valB = Number.parseFloat(bText)
-        } else if (sortBy === "timestamp") {
-          valA = new Date(aText).getTime()
-          valB = new Date(bText).getTime()
-        }
-
-        if (valA < valB) {
-          return newIsAsc ? -1 : 1
-        }
-        if (valA > valB) {
-          return newIsAsc ? 1 : -1
-        }
-        return 0
-      })
-
-      rows.forEach((row) => tbody.appendChild(row))
-    })
-  })
-}
-
-// --- Global Event Listener for all pages ---
-document.addEventListener("DOMContentLoaded", () => {
-  protectRoute() // Run protection on every page load
-
-  // Initialize specific page logic based on current URL
-  const currentPath = window.location.pathname
-
-  if (currentPath.includes("login.html")) {
-    handleLoginForm()
-  } else if (currentPath.includes("pin-verify.html")) {
-    handlePinForm()
-  } else if (currentPath.includes("index.html")) {
-    // Assuming dashboard is index.html
-    initializeDashboardElements()
-    setupSidebarAndNav()
-    setupSendPointsForm()
-    setupTableSorting()
-
-    // Set Dashboard Overview as active by default
-    if (document.getElementById("dashboard-overview-link")) {
-      document.getElementById("dashboard-overview-link").classList.add("bg-gray-700", "text-white")
-    }
-    if (document.getElementById("dashboard-overview-section")) {
-      document.getElementById("dashboard-overview-section").classList.add("active")
-    }
-    renderDashboardOverview()
-
-    // Logout button functionality
-    if (logoutButton) {
-      logoutButton.addEventListener("click", () => {
-        alert("Logging out...")
-        clearSession()
-        window.location.href = "login.html"
-      })
-    }
-  }
-})
+            <t
