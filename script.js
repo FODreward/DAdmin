@@ -651,7 +651,7 @@ async function renderPointTransfers() {
   if (!pointTransfersTableBody) return
   pointTransfersTableBody.innerHTML = ""
   try {
-    pointTransfers = await fetchApi("/admin/point-transfers", "GET", null, true) // Admin endpoint for all point transfers
+    pointTransfers = await fetchApi("/points/history", "GET", null, true) // Admin endpoint for all point transfers
 
     pointTransfers.forEach((transfer) => {
       const row = pointTransfersTableBody.insertRow()
