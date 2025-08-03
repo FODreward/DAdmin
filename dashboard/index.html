@@ -227,22 +227,18 @@
     <div class="flex items-center mb-4">
   <label for="auto-user-approval-toggle" class="text-gray-700 mr-3">Auto User Approval:</label>
 
-  <!-- WRAPPER needs peer class targeting -->
   <div class="relative inline-block w-14 h-8">
-    <!-- CHECKBOX (peer) -->
-    <input type="checkbox" id="auto-user-approval-toggle"
-           class="sr-only peer">
-
-    <!-- BACKGROUND TRACK -->
+    <input type="checkbox" id="auto-user-approval-toggle" class="sr-only peer" />
+    
+    <!-- Track -->
     <div class="block w-14 h-8 rounded-full bg-gray-400 peer-checked:bg-green-500 transition-colors duration-300"></div>
 
-    <!-- TOGGLE THUMB -->
-    <div class="absolute left-1 top-1 w-6 h-6 rounded-full bg-white transition-transform duration-300
-                peer-checked:translate-x-6"></div>
+    <!-- Thumb -->
+    <div class="absolute left-1 top-1 w-6 h-6 rounded-full bg-white transition-transform duration-300 peer-checked:translate-x-6"></div>
   </div>
 
-  <!-- STATUS TEXT -->
-  <span id="approvalStatusLabel" class="ml-3 text-sm font-medium text-gray-600">Auto-Approval is OFF</span>
+  <!-- Status label -->
+  <span id="approvalStatusLabel" class="ml-3 text-sm font-medium text-gray-500">Auto-Approval is OFF</span>
     </div>
     
 
