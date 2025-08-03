@@ -511,17 +511,29 @@
 
   if (!toggle) return;
 
+  function updateLabelUI(checked) {
+    if (!label) return;
+
+    if (checked) {
+      label.textContent = "Auto-Approval is ON";
+      label.classList.remove("text-gray-500");
+      label.classList.add("text-green-600", "font-semibold");
+    } else {
+      label.textContent = "Auto-Approval is OFF";
+      label.classList.remove("text-green-600");
+      label.classList.add("text-gray-500");
+    }
+  }
+
   // Load current setting
   try {
     const res = await fetchApi("/admin/settings", "GET", null, true);
     const setting = res.find((s) => s.key === "auto_user_approval");
 
     if (setting) {
-      toggle.checked = setting.value === "true";
-      if (label)
-        label.textContent = setting.value === "true"
-          ? "Auto-Approval is ON"
-          : "Auto-Approval is OFF";
+      const isOn = setting.value === "true";
+      toggle.checked = isOn;
+      updateLabelUI(isOn);
     }
   } catch (error) {
     console.error("Failed to load auto approval setting:", error);
@@ -543,20 +555,12 @@
         true
       );
 
-      if (label)
-        label.textContent = newValue === "true"
-          ? "Auto-Approval is ON"
-          : "Auto-Approval is OFF";
-
+      updateLabelUI(e.target.checked);
       alert(`Auto User Approval set to: ${newValue}`);
     } catch (error) {
       alert(`Failed to update setting: ${error.message}`);
       e.target.checked = !e.target.checked;
-
-      if (label)
-        label.textContent = e.target.checked
-          ? "Auto-Approval is ON"
-          : "Auto-Approval is OFF";
+      updateLabelUI(e.target.checked);
     }
   });
   }
