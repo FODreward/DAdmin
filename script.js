@@ -506,24 +506,30 @@
 
   // Add this new function:
   async function setupUserManagementListeners() {
-  const toggle = document.getElementById("auto-user-approval-toggle")
-  if (!toggle) return
+  const toggle = document.getElementById("auto-user-approval-toggle");
+  const label = document.getElementById("approvalStatusLabel");
+
+  if (!toggle) return;
 
   // Load current setting
   try {
-    const res = await fetchApi("/admin/settings", "GET", null, true)
-    const setting = res.find((s) => s.key === "auto_user_approval")
+    const res = await fetchApi("/admin/settings", "GET", null, true);
+    const setting = res.find((s) => s.key === "auto_user_approval");
 
     if (setting) {
-      toggle.checked = setting.value === "true"
+      toggle.checked = setting.value === "true";
+      if (label)
+        label.textContent = setting.value === "true"
+          ? "Auto-Approval is ON"
+          : "Auto-Approval is OFF";
     }
   } catch (error) {
-    console.error("Failed to load auto approval setting:", error)
+    console.error("Failed to load auto approval setting:", error);
   }
 
   // Listen for toggle changes
   toggle.addEventListener("change", async (e) => {
-    const newValue = e.target.checked.toString()
+    const newValue = e.target.checked.toString();
 
     try {
       await fetchApi(
@@ -535,15 +541,26 @@
           description: "Automatically approve new user registrations",
         },
         true
-      )
+      );
 
-      alert(`Auto User Approval set to: ${newValue}`)
+      if (label)
+        label.textContent = newValue === "true"
+          ? "Auto-Approval is ON"
+          : "Auto-Approval is OFF";
+
+      alert(`Auto User Approval set to: ${newValue}`);
     } catch (error) {
-      alert(`Failed to update setting: ${error.message}`)
-      e.target.checked = !e.target.checked
+      alert(`Failed to update setting: ${error.message}`);
+      e.target.checked = !e.target.checked;
+
+      if (label)
+        label.textContent = e.target.checked
+          ? "Auto-Approval is ON"
+          : "Auto-Approval is OFF";
     }
-  })
+  });
   }
+  
   
   async function updateUserStatus(userId, newStatus) {
     try {
