@@ -311,41 +311,83 @@
 
   // --- System Settings ---
   async function renderSystemSettings() {
+  const systemSettingsTableBody = document.getElementById("system-settings-table-body");
+  if (!systemSettingsTableBody) return;
+
+  systemSettingsTableBody.innerHTML = "";
+
   try {
     const systemSettings = await fetchApi("/admin/settings", "GET", null, true);
 
     systemSettings.forEach((setting) => {
-      const row = document.querySelector(`tr[data-key="${setting.key}"]`);
-      if (!row) return;
-
-      const checkbox = row.querySelector("input.setting-toggle");
-      const toggleBg = row.querySelector(".toggle-bg");
-      const toggleDot = row.querySelector(".toggle-dot");
-      const statusLabel = row.querySelector(`#${setting.key.replace(/_/g, "-")}-status`);
-      const saveBtn = row.querySelector(".save-setting-btn");
-
-      // Initialize toggle state
+      const isToggle = setting.key.includes("approval"); // customize this logic if needed
       const isChecked = setting.value === "true";
-      checkbox.checked = isChecked;
 
-      updateToggleStyle(isChecked, toggleBg, toggleDot, statusLabel);
+      const row = document.createElement("tr");
+      row.setAttribute("data-key", setting.key);
 
-      // Toggle interaction
-      checkbox.addEventListener("change", () => {
-        updateToggleStyle(checkbox.checked, toggleBg, toggleDot, statusLabel);
-      });
+      row.innerHTML = `
+        <td class="px-4 py-2 font-medium text-gray-800">
+          ${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+        </td>
+        <td class="px-4 py-2">
+          ${
+            isToggle
+              ? `
+            <label class="relative inline-block w-14 h-8">
+              <input type="checkbox" class="sr-only setting-toggle" id="${setting.key}-toggle" ${isChecked ? "checked" : ""} />
+              <div class="block w-14 h-8 rounded-full ${isChecked ? "bg-green-500" : "bg-gray-400"} toggle-bg"></div>
+              <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition toggle-dot ${
+                isChecked ? "translate-x-full" : ""
+              }"></div>
+            </label>
+            <span class="ml-3 text-sm font-semibold text-gray-700" id="${setting.key}-status">${
+                  isChecked ? "ON" : "OFF"
+                }</span>
+          `
+              : `<input type="text" value="${setting.value}" class="border border-gray-300 rounded px-2 py-1 w-full setting-text" id="${setting.key}-input">`
+          }
+        </td>
+        <td class="px-4 py-2">
+          <button class="btn btn-primary save-setting-btn" data-setting="${setting.key}">Save</button>
+        </td>
+      `;
 
-      // Save button logic
+      systemSettingsTableBody.appendChild(row);
+
+      // Toggle logic
+      if (isToggle) {
+        const input = row.querySelector(`#${setting.key}-toggle`);
+        const bg = row.querySelector(".toggle-bg");
+        const dot = row.querySelector(".toggle-dot");
+        const status = row.querySelector(`#${setting.key}-status`);
+
+        input.addEventListener("change", () => {
+          const checked = input.checked;
+          bg.classList.toggle("bg-gray-400", !checked);
+          bg.classList.toggle("bg-green-500", checked);
+          dot.classList.toggle("translate-x-full", checked);
+          status.textContent = checked ? "ON" : "OFF";
+        });
+      }
+
+      // Save logic
+      const saveBtn = row.querySelector(".save-setting-btn");
       saveBtn.addEventListener("click", async () => {
+        let value;
+        if (isToggle) {
+          const input = row.querySelector(`#${setting.key}-toggle`);
+          value = input.checked.toString();
+        } else {
+          const input = row.querySelector(`#${setting.key}-input`);
+          value = input.value.trim();
+        }
+
         try {
-          const newValue = checkbox.checked.toString();
-          await fetchApi("/admin/settings", "PUT", {
-            key: setting.key,
-            value: newValue,
-          }, true);
-          alert(`"${setting.key}" updated successfully.`);
-        } catch (error) {
-          console.error(error);
+          await fetchApi("/admin/settings", "PUT", { key: setting.key, value }, true);
+          alert(`Setting "${setting.key}" updated successfully.`);
+        } catch (err) {
+          console.error("Error updating setting:", err);
           alert(`Failed to update "${setting.key}".`);
         }
       });
@@ -354,22 +396,8 @@
     console.error("Failed to load system settings:", err);
     alert("Could not load system settings.");
   }
-}
-
-// Helper function to update toggle style
-function updateToggleStyle(checked, toggleBg, toggleDot, label) {
-  if (checked) {
-    toggleBg.classList.remove("bg-gray-400");
-    toggleBg.classList.add("bg-green-500");
-    toggleDot.classList.add("translate-x-full");
-    label.textContent = "ON";
-  } else {
-    toggleBg.classList.remove("bg-green-500");
-    toggleBg.classList.add("bg-gray-400");
-    toggleDot.classList.remove("translate-x-full");
-    label.textContent = "OFF";
   }
-}
+  
   // --- User Management ---
   async function renderUserManagement() {
     if (!userManagementTableBody) return
