@@ -627,7 +627,7 @@
 
   // --- Survey Management ---
   async function renderSurveyManagement() {
-    const surveyManagementTableBody = document.getElementById("surveyManagementTableBody")
+    const surveyManagementTableBody = document.getElementById("survey-management-table-body")
     if (!surveyManagementTableBody) return
 
     surveyManagementTableBody.innerHTML = ""
@@ -919,6 +919,7 @@
       renderDashboardOverview()
       renderActivityLog() // Initial render of activity log
       setupUserManagementListeners()
+      renderSurveyManagement()
 
       // Logout button functionality
       if (logoutButton) {
