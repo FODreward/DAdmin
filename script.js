@@ -758,42 +758,66 @@
   }
 
   // --- Redemption Requests ---
+
   async function renderRedemptionRequests() {
-    if (!redemptionRequestsTableBody) return
-    redemptionRequestsTableBody.innerHTML = ""
-    try {
-      redemptionRequests = await fetchApi("/admin/redemptions", "GET", null, true) // Admin endpoint for all redemptions
+  if (!redemptionRequestsTableBody) return;
+  redemptionRequestsTableBody.innerHTML = "";
 
-      redemptionRequests.forEach((request) => {
-        const row = redemptionRequestsTableBody.insertRow()
-        row.innerHTML = `
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.user_id}</td> <!-- User ID, ideally user email/name -->
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.points_amount}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.type}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${request.status}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  ${request.status === "pending" ? `<button id="approve-redemption-${request.id}" class="action-btn approve-redemption-btn text-green-600 hover:text-green-900 mr-2">Approve</button>` : ""}
-                  ${request.status === "pending" ? `<button id="reject-redemption-${request.id}" class="action-btn reject-redemption-btn text-red-600 hover:text-red-900">Reject</button>` : ""}
-              </td>
-          `
-      })
+  try {
+    let redemptionRequests = await fetchApi("/admin/redemptions", "GET", null, true); // Admin endpoint
 
-      document.querySelectorAll(".approve-redemption-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const requestId = e.target.id.replace("approve-redemption-", "")
-          updateRedemptionStatus(requestId, "approve") // Backend expects 'approve' or 'reject'
-        })
-      })
-      document.querySelectorAll(".reject-redemption-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const requestId = e.target.id.replace("reject-redemption-", "")
-          updateRedemptionStatus(requestId, "reject") // Backend expects 'approve' or 'reject'
-        })
-      })
-    } catch (error) {
-      console.error("Failed to fetch redemption requests:", error)
-      alert(`Failed to load redemption requests: ${error.message}`)
-    }
+    // Sort so pending requests are on top
+    redemptionRequests.sort((a, b) => {
+      if (a.status === "pending" && b.status !== "pending") return -1;
+      if (a.status !== "pending" && b.status === "pending") return 1;
+      return 0;
+    });
+
+    redemptionRequests.forEach((request) => {
+      // Determine destination based on type
+      const destination =
+        request.type === "gift_card" ? request.email_address || "" : request.wallet_address || "";
+
+      const row = redemptionRequestsTableBody.insertRow();
+      row.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.user_email || request.user_id}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.points_amount}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.type}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${destination}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${request.status}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          ${
+            request.status === "pending"
+              ? `<button id="approve-redemption-${request.id}" class="action-btn approve-redemption-btn text-green-600 hover:text-green-900 mr-2">Approve</button>`
+              : ""
+          }
+          ${
+            request.status === "pending"
+              ? `<button id="reject-redemption-${request.id}" class="action-btn reject-redemption-btn text-red-600 hover:text-red-900">Reject</button>`
+              : ""
+          }
+        </td>
+      `;
+    });
+
+    // Attach event listeners for approve/reject buttons
+    document.querySelectorAll(".approve-redemption-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const requestId = e.target.id.replace("approve-redemption-", "");
+        updateRedemptionStatus(requestId, "approve"); // Backend expects 'approve' or 'reject'
+      });
+    });
+
+    document.querySelectorAll(".reject-redemption-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const requestId = e.target.id.replace("reject-redemption-", "");
+        updateRedemptionStatus(requestId, "reject"); // Backend expects 'approve' or 'reject'
+      });
+    });
+  } catch (error) {
+    console.error("Failed to fetch redemption requests:", error);
+    alert(`Failed to load redemption requests: ${error.message}`);
+  }
   }
 
   async function updateRedemptionStatus(requestId, action) {
