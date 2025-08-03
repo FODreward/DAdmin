@@ -775,8 +775,7 @@
 
     redemptionRequests.forEach((request) => {
       // Determine destination based on type
-      const destination =
-        request.type === "gift_card" ? request.email_address || "" : request.wallet_address || "";
+      const destination = request.destination || "";
 
       const row = redemptionRequestsTableBody.insertRow();
       row.innerHTML = `
