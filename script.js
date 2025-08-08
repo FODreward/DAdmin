@@ -398,8 +398,7 @@
               ? `
             <label class="relative inline-block w-14 h-8 cursor-pointer">
               <input type="checkbox" class="sr-only peer setting-toggle" id="${setting.key}-toggle" ${isChecked ? "checked" : ""} />
-              <div class="block w-14 h-8 rounded-full bg-gray-400 peer-checked:bg-green-500 toggle-bg"></div>
-              <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform peer-checked:translate-x-full toggle-dot"></div>
+              <div class="block w-14 h-8 rounded-full toggle-bg"></div>
             </label>
             <span class="ml-3 text-sm font-semibold text-gray-700" id="${setting.key}-status">${
                   isChecked ? "ON" : "OFF"
