@@ -40,7 +40,29 @@
       #sidebar.collapsed .sidebar-link-text {
         display: none;
       }
-      /* Removed custom .toggle-bg styles, relying on Tailwind now */
+      /* Original toggle-bg styles re-added */
+      .toggle-bg:after {
+        content: "";
+        position: absolute;
+        top: 0.25rem;
+        left: 0.25rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        background-color: white;
+        border-radius: 9999px;
+        transition: transform 0.3s ease-in-out;
+      }
+      .peer-checked ~ .toggle-bg:after {
+        transform: translateX(100%);
+      }
+      .toggle-bg {
+        background-color: #ccc;
+        border-radius: 9999px;
+        transition: background-color 0.3s ease-in-out;
+      }
+      .peer-checked ~ .toggle-bg {
+        background-color: #4caf50;
+      }
     </style>
   </head>
   <body class="flex h-screen">
@@ -443,9 +465,7 @@
                   class="sr-only peer"
                   id="auto-user-approval-toggle"
                 />
-                <div
-                  class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-500"
-                ></div>
+                <div class="w-11 h-6 rounded-full toggle-bg"></div>
                 <span
                   id="approvalStatusLabel"
                   class="ml-3 text-sm font-medium text-gray-500"
