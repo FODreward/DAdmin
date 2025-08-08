@@ -361,97 +361,97 @@
 
   // --- System Settings ---
   async function renderSystemSettings() {
-  const systemSettingsTableBody = document.getElementById("system-settings-table-body");
-  if (!systemSettingsTableBody) return;
+    const systemSettingsTableBody = document.getElementById("system-settings-table-body");
+    if (!systemSettingsTableBody) return;
 
-  systemSettingsTableBody.innerHTML = "";
+    systemSettingsTableBody.innerHTML = "";
 
-  try {
-    const systemSettings = await fetchApi("/admin/settings", "GET", null, true);
+    try {
+      const systemSettings = await fetchApi("/admin/settings", "GET", null, true);
 
-    systemSettings.forEach((setting) => {
-      // Skip rendering fraud rules in System Settings, as they are managed under Fraud Management
-      const fraudRuleKeys = [
-        "max_devices_per_user",
-        "max_users_per_fingerprint",
-        "max_ips_per_user_24h",
-        "max_signups_per_fingerprint_24h",
-      ];
-      if (fraudRuleKeys.includes(setting.key)) {
-        return; // Skip this iteration
-      }
+      systemSettings.forEach((setting) => {
+        // Skip rendering fraud rules in System Settings, as they are managed under Fraud Management
+        const fraudRuleKeys = [
+          "max_devices_per_user",
+          "max_users_per_fingerprint",
+          "max_ips_per_user_24h",
+          "max_signups_per_fingerprint_24h",
+        ];
+        if (fraudRuleKeys.includes(setting.key)) {
+          return; // Skip this iteration
+        }
 
-      const isToggle = setting.key === "auto_user_approval"; // Use specific key for toggle
-      const isChecked = setting.value === "true";
+        const isToggle = setting.key === "auto_user_approval"; // Use specific key for toggle
+        const isChecked = setting.value === "true";
 
-      const row = document.createElement("tr");
-      row.setAttribute("data-key", setting.key);
+        const row = document.createElement("tr");
+        row.setAttribute("data-key", setting.key);
 
-      row.innerHTML = `
-        <td class="px-4 py-2 font-medium text-gray-800">
-          ${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-          ${setting.description ? `<p class="text-xs text-gray-500 mt-1">${setting.description}</p>` : ''}
-        </td>
-        <td class="px-4 py-2">
-          ${
-            isToggle
-              ? `
-            <label class="relative inline-block w-14 h-8 cursor-pointer">
-              <input type="checkbox" class="sr-only peer setting-toggle" id="${setting.key}-toggle" ${isChecked ? "checked" : ""} />
-              <div class="block w-14 h-8 rounded-full toggle-bg"></div>
-            </label>
-            <span class="ml-3 text-sm font-semibold text-gray-700" id="${setting.key}-status">${
-                  isChecked ? "ON" : "OFF"
-                }</span>
-          `
-              : `<input type="text" value="${setting.value}" class="border border-gray-300 rounded px-2 py-1 w-full setting-text" id="${setting.key}-input">`
-          }
-        </td>
-        <td class="px-4 py-2">
-          <button class="btn btn-primary save-setting-btn" data-setting="${setting.key}">Save</button>
-        </td>
-      `;
+        row.innerHTML = `
+          <td class="px-4 py-2 font-medium text-gray-800">
+            ${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+            ${setting.description ? `<p class="text-xs text-gray-500 mt-1">${setting.description}</p>` : ''}
+          </td>
+          <td class="px-4 py-2">
+            ${
+              isToggle
+                ? `
+              <label class="relative inline-block w-14 h-8 cursor-pointer">
+                <input type="checkbox" class="sr-only peer setting-toggle" id="${setting.key}-toggle" ${isChecked ? "checked" : ""} />
+                <div class="w-14 h-8 bg-gray-200 rounded-full peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all dark:border-gray-600 peer-checked:bg-green-500"></div>
+              </label>
+              <span class="ml-3 text-sm font-semibold text-gray-700" id="${setting.key}-status">${
+                    isChecked ? "ON" : "OFF"
+                  }</span>
+            `
+                : `<input type="text" value="${setting.value}" class="border border-gray-300 rounded px-2 py-1 w-full setting-text" id="${setting.key}-input">`
+            }
+          </td>
+          <td class="px-4 py-2">
+            <button class="btn btn-primary save-setting-btn" data-setting="${setting.key}">Save</button>
+          </td>
+        `;
 
-      systemSettingsTableBody.appendChild(row);
+        systemSettingsTableBody.appendChild(row);
 
-      // Toggle logic
-      if (isToggle) {
-        const input = row.querySelector(`#${setting.key}-toggle`);
-        const status = row.querySelector(`#${setting.key}-status`);
-
-        input.addEventListener("change", () => {
-          const checked = input.checked;
-          status.textContent = checked ? "ON" : "OFF";
-        });
-      }
-
-      // Save logic
-      const saveBtn = row.querySelector(".save-setting-btn");
-      saveBtn.addEventListener("click", async () => {
-        let value;
+        // Toggle logic
         if (isToggle) {
           const input = row.querySelector(`#${setting.key}-toggle`);
-          value = input.checked.toString();
-        } else {
-          const input = row.querySelector(`#${setting.key}-input`);
-          value = input.value.trim();
+          const status = row.querySelector(`#${setting.key}-status`);
+
+          input.addEventListener("change", () => {
+            const checked = input.checked;
+            status.textContent = checked ? "ON" : "OFF";
+          });
         }
 
-        try {
-          // Use the description from the fetched setting or default to empty string
-          const descriptionToSend = setting.description || "";
-          await fetchApi("/admin/settings", "PUT", { key: setting.key, value, description: descriptionToSend }, true);
-          alert(`Setting "${setting.key}" updated successfully.`);
-        } catch (err) {
-          console.error("Error updating setting:", err);
-          alert(`Failed to update "${setting.key}".`);
-        }
+        // Save logic
+        const saveBtn = row.querySelector(".save-setting-btn");
+        saveBtn.addEventListener("click", async () => {
+          let value;
+          if (isToggle) {
+            const input = row.querySelector(`#${setting.key}-toggle`);
+            value = input.checked.toString();
+          } else {
+            const input = row.querySelector(`#${setting.key}-input`);
+            value = input.value.trim();
+          }
+
+          try {
+            // Use the description from the fetched setting or default to empty string
+            const descriptionToSend = setting.description || "";
+            await fetchApi("/admin/settings", "PUT", { key: setting.key, value, description: descriptionToSend }, true);
+            console.log(`Setting "${setting.key}" updated successfully.`); // Changed from alert
+          } catch (err) {
+            console.error("Error updating setting:", err);
+            alert(`Failed to update "${setting.key}".`);
+          }
+        });
       });
-    });
-  } catch (err) {
-    console.error("Failed to load system settings:", err);
-    alert("Could not load system settings.");
-  }
+    } catch (err) {
+      console.error("Failed to load system settings:", err);
+      alert("Could not load system settings.");
+    }
   }
 
   // --- User Management ---
@@ -529,7 +529,7 @@
             if (confirm(`Are you sure you want to approve ${pendingUserIds.length} pending users?`)) {
               try {
                 await fetchApi("/admin/users/bulk-status", "PUT", { user_ids: pendingUserIds, status: "approved" }, true)
-                alert("All pending users approved!")
+                console.log("All pending users approved!") // Changed from alert
                 renderUserManagement()
                 renderDashboardOverview()
               } catch (error) {
@@ -549,7 +549,7 @@
             if (confirm(`Are you sure you want to reject and delete ${pendingUserIds.length} pending users? This action is irreversible.`)) {
               try {
                 await fetchApi("/admin/users/bulk-status", "PUT", { user_ids: pendingUserIds, status: "rejected" }, true)
-                alert("All pending users rejected and deleted!")
+                console.log("All pending users rejected and deleted!") // Changed from alert
                 renderUserManagement()
                 renderDashboardOverview()
               } catch (error) {
@@ -572,63 +572,63 @@
 
   // Add this new function:
   async function setupUserManagementListeners() {
-  const toggle = document.getElementById("auto-user-approval-toggle");
-  const label = document.getElementById("approvalStatusLabel");
+    const toggle = document.getElementById("auto-user-approval-toggle");
+    const label = document.getElementById("approvalStatusLabel");
 
-  if (!toggle) return;
+    if (!toggle) return;
 
-  function updateLabelUI(checked) {
-    if (!label) return;
+    function updateLabelUI(checked) {
+      if (!label) return;
 
-    if (checked) {
-      label.textContent = "Auto-Approval is ON";
-      label.classList.remove("text-gray-500");
-      label.classList.add("text-green-600", "font-semibold");
-    } else {
-      label.textContent = "Auto-Approval is OFF";
-      label.classList.remove("text-green-600");
-      label.classList.add("text-gray-500");
+      if (checked) {
+        label.textContent = "Auto-Approval is ON";
+        label.classList.remove("text-gray-500");
+        label.classList.add("text-green-600", "font-semibold");
+      } else {
+        label.textContent = "Auto-Approval is OFF";
+        label.classList.remove("text-green-600");
+        label.classList.add("text-gray-500");
+      }
     }
-  }
 
-  // Load current setting
-  try {
-    const res = await fetchApi("/admin/settings", "GET", null, true);
-    const setting = res.find((s) => s.key === "auto_user_approval");
-
-    if (setting) {
-      const isOn = setting.value === "true";
-      toggle.checked = isOn;
-      updateLabelUI(isOn);
-    }
-  } catch (error) {
-    console.error("Failed to load auto approval setting:", error);
-  }
-
-  // Listen for toggle changes
-  toggle.addEventListener("change", async (e) => {
-    const newValue = e.target.checked.toString();
-
+    // Load current setting
     try {
-      await fetchApi(
-        "/admin/settings",
-        "PUT",
-        {
-          key: "auto_user_approval",
-          value: newValue,
-          description: "Automatically approve new user registrations", // Keep description for consistency
-        },
-        true
-      );
+      const res = await fetchApi("/admin/settings", "GET", null, true);
+      const setting = res.find((s) => s.key === "auto_user_approval");
 
-      updateLabelUI(e.target.checked);
-      alert(`Auto User Approval set to: ${newValue}`);
+      if (setting) {
+        const isOn = setting.value === "true";
+        toggle.checked = isOn;
+        updateLabelUI(isOn);
+      }
     } catch (error) {
-      alert(`Failed to update setting: ${error.message}`);
-      e.target.checked = !e.target.checked; // Revert toggle state on error
-      updateLabelUI(e.target.checked);
+      console.error("Failed to load auto approval setting:", error);
     }
-  });
+
+    // Listen for toggle changes
+    toggle.addEventListener("change", async (e) => {
+      const newValue = e.target.checked.toString();
+
+      try {
+        await fetchApi(
+          "/admin/settings",
+          "PUT",
+          {
+            key: "auto_user_approval",
+            value: newValue,
+            description: "Automatically approve new user registrations", // Keep description for consistency
+          },
+          true
+        );
+
+        updateLabelUI(e.target.checked);
+        console.log(`Auto User Approval set to: ${newValue}`); // Changed from alert
+      } catch (error) {
+        alert(`Failed to update setting: ${error.message}`);
+        e.target.checked = !e.target.checked; // Revert toggle state on error
+        updateLabelUI(e.target.checked);
+      }
+    });
   }
 
 
@@ -638,7 +638,7 @@
         return; // Stop if user cancels
       }
       await fetchApi(`/admin/users/${userId}/status`, "PUT", { status: newStatus }, true)
-      alert(`User status updated to ${newStatus}.`)
+      console.log(`User status updated to ${newStatus}.`) // Changed from alert
       renderUserManagement() // Re-render table
       renderDashboardOverview()
     } catch (error) {
@@ -654,7 +654,7 @@
         { user_id: Number.parseInt(userId), is_agent: isAgent },
         true,
       )
-      alert(`Agent role ${isAgent ? "assigned" : "removed"}. Referral code: ${data.referral_code || "N/A"}`)
+      console.log(`Agent role ${isAgent ? "assigned" : "removed"}. Referral code: ${data.referral_code || "N/A"}`) // Changed from alert
       renderUserManagement() // Re-render user table
       renderAgentManagement() // Re-render agent table
     } catch (error) {
@@ -818,75 +818,75 @@
   // --- Redemption Requests ---
 
   async function renderRedemptionRequests() {
-  if (!redemptionRequestsTableBody) return;
-  redemptionRequestsTableBody.innerHTML = "";
+    if (!redemptionRequestsTableBody) return;
+    redemptionRequestsTableBody.innerHTML = "";
 
-  try {
-    let redemptionRequests = await fetchApi("/admin/redemptions", "GET", null, true); // Admin endpoint
+    try {
+      let redemptionRequests = await fetchApi("/admin/redemptions", "GET", null, true); // Admin endpoint
 
-    if (redemptionRequests.length === 0) {
-      const row = redemptionRequestsTableBody.insertRow()
-      row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No redemption requests found.</td>`
-      return;
+      if (redemptionRequests.length === 0) {
+        const row = redemptionRequestsTableBody.insertRow()
+        row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No redemption requests found.</td>`
+        return;
+      }
+
+      // Sort so pending requests are on top
+      redemptionRequests.sort((a, b) => {
+        if (a.status === "pending" && b.status !== "pending") return -1;
+        if (a.status !== "pending" && b.status === "pending") return 1;
+        return 0;
+      });
+
+      redemptionRequests.forEach((request) => {
+        // Determine destination based on type
+        const destination = request.destination || "";
+
+        const row = redemptionRequestsTableBody.insertRow();
+        row.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.user_email || request.user_id}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.points_amount}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.type}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${destination}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${request.status}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            ${
+              request.status === "pending"
+                ? `<button id="approve-redemption-${request.id}" class="action-btn approve-redemption-btn text-green-600 hover:text-green-900 mr-2">Approve</button>`
+                : ""
+            }
+            ${
+              request.status === "pending"
+                ? `<button id="reject-redemption-${request.id}" class="action-btn reject-redemption-btn text-red-600 hover:text-red-900">Reject</button>`
+                : ""
+            }
+          </td>
+        `;
+      });
+
+      // Attach event listeners for approve/reject buttons
+      document.querySelectorAll(".approve-redemption-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const requestId = e.target.id.replace("approve-redemption-", "");
+          updateRedemptionStatus(requestId, "approve"); // Backend expects 'approve' or 'reject'
+        });
+      });
+
+      document.querySelectorAll(".reject-redemption-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const requestId = e.target.id.replace("reject-redemption-", "");
+          updateRedemptionStatus(requestId, "reject"); // Backend expects 'approve' or 'reject'
+        });
+      });
+    } catch (error) {
+      console.error("Failed to fetch redemption requests:", error);
+      alert(`Failed to load redemption requests: ${error.message}`);
     }
-
-    // Sort so pending requests are on top
-    redemptionRequests.sort((a, b) => {
-      if (a.status === "pending" && b.status !== "pending") return -1;
-      if (a.status !== "pending" && b.status === "pending") return 1;
-      return 0;
-    });
-
-    redemptionRequests.forEach((request) => {
-      // Determine destination based on type
-      const destination = request.destination || "";
-
-      const row = redemptionRequestsTableBody.insertRow();
-      row.innerHTML = `
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.user_email || request.user_id}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.points_amount}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.type}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${destination}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${request.status}</td>
-        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-          ${
-            request.status === "pending"
-              ? `<button id="approve-redemption-${request.id}" class="action-btn approve-redemption-btn text-green-600 hover:text-green-900 mr-2">Approve</button>`
-              : ""
-          }
-          ${
-            request.status === "pending"
-              ? `<button id="reject-redemption-${request.id}" class="action-btn reject-redemption-btn text-red-600 hover:text-red-900">Reject</button>`
-              : ""
-          }
-        </td>
-      `;
-    });
-
-    // Attach event listeners for approve/reject buttons
-    document.querySelectorAll(".approve-redemption-btn").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        const requestId = e.target.id.replace("approve-redemption-", "");
-        updateRedemptionStatus(requestId, "approve"); // Backend expects 'approve' or 'reject'
-      });
-    });
-
-    document.querySelectorAll(".reject-redemption-btn").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        const requestId = e.target.id.replace("reject-redemption-", "");
-        updateRedemptionStatus(requestId, "reject"); // Backend expects 'approve' or 'reject'
-      });
-    });
-  } catch (error) {
-    console.error("Failed to fetch redemption requests:", error);
-    alert(`Failed to load redemption requests: ${error.message}`);
-  }
   }
 
   async function updateRedemptionStatus(requestId, action) {
     try {
       await fetchApi(`/admin/redemptions/${requestId}/process?action=${action}`, "PUT", null, true)
-      alert(`Redemption request ${requestId} status updated to ${action}.`)
+      console.log(`Redemption request ${requestId} status updated to ${action}.`) // Changed from alert
       renderRedemptionRequests()
       renderDashboardOverview()
     } catch (error) {
@@ -980,7 +980,7 @@
 
       try {
         await fetchApi("/admin/point-transfers", "POST", payload, true)
-        alert("Points sent successfully.")
+        console.log("Points sent successfully.") // Changed from alert
         sendPointsForm.reset(); // Clear the form
         window.renderPointTransfers(); // Re-render transfers table
         renderDashboardOverview(); // Update dashboard stats
@@ -1034,7 +1034,7 @@
     }
     try {
       await fetchApi(`/admin/fraud-flags/${userId}`, "DELETE", null, true);
-      alert(`Fraud flag for user ID ${userId} cleared successfully.`);
+      console.log(`Fraud flag for user ID ${userId} cleared successfully.`); // Changed from alert
       renderFraudManagement(); // Re-render the flags table
       renderUserManagement(); // Re-render user table to reflect is_flagged status change
     } catch (error) {
@@ -1100,7 +1100,7 @@
           try {
             // Only send limit_value and action, as rule_key is in the path
             await fetchApi(`/admin/fraud/rules/${ruleKey}`, "POST", { limit_value: limitValue, action: action }, true);
-            alert(`Fraud rule "${ruleKey}" updated successfully.`);
+            console.log(`Fraud rule "${ruleKey}" updated successfully.`); // Changed from alert
             renderFraudRules(); // Re-render to show updated values
           } catch (error) {
             console.error("Error updating fraud rule:", error);
@@ -1149,7 +1149,11 @@
         initialSection.classList.add("active");
       }
       
-      // Initial renders for dashboard sections
+      // Initial render for the determined section on page load/refresh
+      renderSectionContent(initialSectionId); // THIS IS THE KEY CHANGE FOR REFRESH
+
+      // Initial renders for dashboard sections (some might be redundant if renderSectionContent covers them)
+      // Keeping these for now if they handle specific initializations not covered by renderSectionContent
       renderSystemSettings() // Call this here to populate systemSettings array
       renderDashboardOverview()
       renderActivityLog() // Initial render of activity log
@@ -1158,7 +1162,7 @@
       // Logout button functionality
       if (logoutButton) {
         logoutButton.addEventListener("click", () => {
-          alert("Logging out...")
+          console.log("Logging out...") // Changed from alert
           clearSession()
           window.location.href = "/" // Redirect to root login page
         })
