@@ -348,9 +348,9 @@
       logs.forEach((log) => {
         const row = activityLogTableBody.insertRow()
         row.innerHTML = `
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(log.timestamp).toLocaleString()}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${log.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${log.message}</td>
+          <td class="table-row-data">${new Date(log.timestamp).toLocaleString()}</td>
+          <td class="table-row-data font-medium text-gray-900">${log.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
+          <td class="table-row-data">${log.message}</td>
         `
       })
     } catch (error) {
@@ -398,17 +398,19 @@
                 ? `
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" class="sr-only peer setting-toggle" id="${setting.key}-toggle" ${isChecked ? "checked" : ""} />
-                <div class="w-11 h-6 rounded-full toggle-bg"></div>
+                <div class="toggle-bg ${isChecked ? 'checked' : ''}">
+                  <div class="toggle-dot ${isChecked ? 'checked' : ''}"></div>
+                </div>
               </label>
               <span class="ml-3 text-sm font-semibold text-gray-700" id="${setting.key}-status">${
                     isChecked ? "ON" : "OFF"
                   }</span>
             `
-                : `<input type="text" value="${setting.value}" class="border border-gray-300 rounded px-2 py-1 w-full setting-text" id="${setting.key}-input">`
+                : `<input type="text" value="${setting.value}" class="input-field" id="${setting.key}-input">`
             }
           </td>
           <td class="px-4 py-2">
-            <button class="btn btn-primary save-setting-btn" data-setting="${setting.key}">Save</button>
+            <button class="btn btn-primary save-setting-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md" data-setting="${setting.key}">Save</button>
           </td>
         `;
 
@@ -417,10 +419,19 @@
         // Toggle logic
         if (isToggle) {
           const input = row.querySelector(`#${setting.key}-toggle`);
+          const toggleBg = row.querySelector('.toggle-bg');
+          const toggleDot = row.querySelector('.toggle-dot');
           const status = row.querySelector(`#${setting.key}-status`);
 
           input.addEventListener("change", () => {
             const checked = input.checked;
+            if (checked) {
+              toggleBg.classList.add('checked');
+              toggleDot.classList.add('checked');
+            } else {
+              toggleBg.classList.remove('checked');
+              toggleDot.classList.remove('checked');
+            }
             status.textContent = checked ? "ON" : "OFF";
           });
         }
@@ -470,10 +481,10 @@
       users.forEach((user) => {
         const row = userManagementTableBody.insertRow()
         row.innerHTML = `
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.name}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${user.status}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${user.is_admin ? "Admin" : user.is_agent ? "Agent" : "User"}</td>
+              <td class="table-row-data font-medium text-gray-900">${user.name}</td>
+              <td class="table-row-data">${user.email}</td>
+              <td class="table-row-data capitalize">${user.status}</td>
+              <td class="table-row-data capitalize">${user.is_admin ? "Admin" : user.is_agent ? "Agent" : "User"}</td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   ${user.status === "pending" ? `<button id="approve-user-${user.id}" class="action-btn approve-user-btn text-green-600 hover:text-green-900 mr-2">Approve</button>` : ""}
                   ${user.status === "pending" ? `<button id="reject-user-${user.id}" class="action-btn reject-user-btn text-red-600 hover:text-red-900 mr-2">Reject</button>` : ""}
@@ -573,6 +584,8 @@
   // Add this new function:
   async function setupUserManagementListeners() {
     const toggle = document.getElementById("auto-user-approval-toggle");
+    const toggleBg = toggle.nextElementSibling; // The div with class toggle-bg
+    const toggleDot = toggleBg.firstElementChild; // The div with class toggle-dot
     const label = document.getElementById("approvalStatusLabel");
 
     if (!toggle) return;
@@ -599,6 +612,13 @@
       if (setting) {
         const isOn = setting.value === "true";
         toggle.checked = isOn;
+        if (isOn) {
+          toggleBg.classList.add('checked');
+          toggleDot.classList.add('checked');
+        } else {
+          toggleBg.classList.remove('checked');
+          toggleDot.classList.remove('checked');
+        }
         updateLabelUI(isOn);
       }
     } catch (error) {
@@ -608,6 +628,15 @@
     // Listen for toggle changes
     toggle.addEventListener("change", async (e) => {
       const newValue = e.target.checked.toString();
+      const checked = e.target.checked;
+
+      if (checked) {
+        toggleBg.classList.add('checked');
+        toggleDot.classList.add('checked');
+      } else {
+        toggleBg.classList.remove('checked');
+        toggleDot.classList.remove('checked');
+      }
 
       try {
         await fetchApi(
@@ -626,6 +655,13 @@
       } catch (error) {
         alert(`Failed to update setting: ${error.message}`);
         e.target.checked = !e.target.checked; // Revert toggle state on error
+        if (e.target.checked) { // Revert visual state
+          toggleBg.classList.add('checked');
+          toggleDot.classList.add('checked');
+        } else {
+          toggleBg.classList.remove('checked');
+          toggleDot.classList.remove('checked');
+        }
         updateLabelUI(e.target.checked);
       }
     });
@@ -679,9 +715,9 @@
       agents.forEach((agent) => {
         const row = agentManagementTableBody.insertRow()
         row.innerHTML = `
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${agent.name}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${agent.referral_code || "N/A"}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${agent.referred_users_count || 0}</td>
+              <td class="table-row-data font-medium text-gray-900">${agent.name}</td>
+              <td class="table-row-data">${agent.referral_code || "N/A"}</td>
+              <td class="table-row-data">${agent.referred_users_count || 0}</td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button id="demote-agent-${agent.id}" class="action-btn demote-agent-btn text-red-600 hover:text-red-900">Demote Agent</button>
               </td>
@@ -769,10 +805,10 @@
         paginatedTransfers.forEach((t) => {
           const row = tbody.insertRow()
           row.innerHTML = `
-            <td class="px-6 py-4 text-sm font-medium text-gray-900">${t.from_user?.email || "N/A"}</td>
-            <td class="px-6 py-4 text-sm text-gray-500">${t.to_user?.email || "N/A"}</td>
-            <td class="px-6 py-4 text-sm text-gray-500">${t.amount}</td>
-            <td class="px-6 py-4 text-sm text-gray-500">${new Date(t.created_at).toLocaleString()}</td>
+            <td class="table-row-data font-medium text-gray-900">${t.from_user?.email || "N/A"}</td>
+            <td class="table-row-data">${t.to_user?.email || "N/A"}</td>
+            <td class="table-row-data">${t.amount}</td>
+            <td class="table-row-data">${new Date(t.created_at).toLocaleString()}</td>
             <td class="px-6 py-4 text-right text-sm font-medium"></td>
           `
         })
@@ -843,11 +879,11 @@
 
         const row = redemptionRequestsTableBody.insertRow();
         row.innerHTML = `
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.user_email || request.user_id}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.points_amount}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.type}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${destination}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${request.status}</td>
+          <td class="table-row-data font-medium text-gray-900">${request.user_email || request.user_id}</td>
+          <td class="table-row-data">${request.points_amount}</td>
+          <td class="table-row-data">${request.type}</td>
+          <td class="table-row-data">${destination}</td>
+          <td class="table-row-data capitalize">${request.status}</td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
             ${
               request.status === "pending"
@@ -1007,9 +1043,9 @@
       fraudFlags.forEach((flag) => {
         const row = fraudFlagsTableBody.insertRow();
         row.innerHTML = `
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${flag.user.email}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${flag.reason}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(flag.created_at).toLocaleString()}</td>
+          <td class="table-row-data font-medium text-gray-900">${flag.user.email}</td>
+          <td class="table-row-data">${flag.reason}</td>
+          <td class="table-row-data">${new Date(flag.created_at).toLocaleString()}</td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
             <button id="clear-flag-${flag.user.id}" class="action-btn clear-fraud-flag-btn text-red-600 hover:text-red-900">Clear Flag</button>
           </td>
@@ -1065,13 +1101,13 @@
 
         const row = fraudRulesTableBody.insertRow();
         row.innerHTML = `
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${rule.rule_key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
-          <td class="px-6 py-4 text-sm text-gray-500">${rule.description || 'N/A'}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm">
-            <input type="number" value="${rule.limit_value}" class="form-input w-24 text-center fraud-rule-limit" data-rule-key="${rule.rule_key}" min="1">
+          <td class="table-row-data font-medium text-gray-900">${rule.rule_key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
+          <td class="table-row-data">${rule.description || 'N/A'}</td>
+          <td class="table-row-data">
+            <input type="number" value="${rule.limit_value}" class="input-field w-24 text-center fraud-rule-limit" data-rule-key="${rule.rule_key}" min="1">
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm">
-            <select class="form-select fraud-rule-action" data-rule-key="${rule.rule_key}">
+          <td class="table-row-data">
+            <select class="input-field fraud-rule-action" data-rule-key="${rule.rule_key}">
               <option value="allow" ${rule.action === 'allow' ? 'selected' : ''}>Allow</option>
               <option value="flag" ${rule.action === 'flag' ? 'selected' : ''}>Flag</option>
               <option value="block" ${rule.action === 'block' ? 'selected' : ''}>Block</option>
@@ -1079,7 +1115,7 @@
             </select>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <button class="btn btn-primary save-fraud-rule-btn" data-rule-key="${rule.rule_key}">Save</button>
+            <button class="btn btn-primary save-fraud-rule-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md" data-rule-key="${rule.rule_key}">Save</button>
           </td>
         `;
         fraudRulesTableBody.appendChild(row);
