@@ -5,77 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard</title>
     <link href="/styles.css" rel="stylesheet" />
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        font-family: "Inter", sans-serif;
-        background-color: #f4f7f6;
-      }
-      #sidebar {
-        width: 250px;
-        transition: width 0.3s ease-in-out;
-      }
-      #sidebar.collapsed {
-        width: 80px;
-      }
-      #main-content {
-        margin-left: 250px;
-        transition: margin-left 0.3s ease-in-out;
-      }
-      #main-content.collapsed {
-        margin-left: 80px;
-      }
-      .section-content {
-        display: none;
-      }
-      .section-content.active {
-        display: block;
-      }
-      .sidebar-link-text {
-        display: inline-block;
-      }
-      #sidebar.collapsed .sidebar-link-text {
-        display: none;
-      }
-      /* Original toggle-bg styles re-added */
-      .toggle-bg:after {
-        content: "";
-        position: absolute;
-        top: 0.25rem;
-        left: 0.25rem;
-        width: 1.5rem;
-        height: 1.5rem;
-        background-color: white;
-        border-radius: 9999px;
-        transition: transform 0.3s ease-in-out;
-      }
-      .peer-checked ~ .toggle-bg:after {
-        transform: translateX(100%);
-      }
-      .toggle-bg {
-        background-color: #ccc;
-        border-radius: 9999px;
-        transition: background-color 0.3s ease-in-out;
-      }
-      .peer-checked ~ .toggle-bg {
-        background-color: #4caf50;
-      }
-    </style>
+     Tailwind CSS is already included in styles.css, no need for CDN here 
   </head>
   <body class="flex h-screen">
      Sidebar 
-    <aside
-      id="sidebar"
-      class="bg-gray-800 text-white flex flex-col h-full fixed"
-    >
+    <aside id="sidebar" class="sidebar">
       <div class="p-4 border-b border-gray-700 flex items-center">
-        <h1 class="text-2xl font-bold sidebar-link-text">Admin Panel</h1>
+        <h1 class="text-2xl font-bold sidebar-header-text">Admin Panel</h1>
         <button id="sidebar-toggle" class="ml-auto p-2 focus:outline-none">
           <svg
-            class="w-6 h-6"
+            class="w-6 h-6 sidebar-toggle-icon"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -99,7 +38,7 @@
               class="flex items-center p-2 hover:bg-gray-700 rounded-md"
             >
               <svg
-                class="w-6 h-6 mr-2"
+                class="w-6 h-6 mr-2 icon"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -112,7 +51,7 @@
                   d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001 1h2a1 1 0 001-1m-6 0h4"
                 ></path>
               </svg>
-              <span class="sidebar-link-text">Dashboard Overview</span>
+              <span class="sidebar-link-text text">Dashboard Overview</span>
             </a>
           </li>
           <li class="mb-2">
@@ -122,7 +61,7 @@
               class="flex items-center p-2 hover:bg-gray-700 rounded-md"
             >
               <svg
-                class="w-6 h-6 mr-2"
+                class="w-6 h-6 mr-2 icon"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -135,7 +74,7 @@
                   d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm-6-9a4 4 0 100-8 4 4 0 000 8zm6 9v-1a6 6 0 00-9-5.197V21h9z"
                 ></path>
               </svg>
-              <span class="sidebar-link-text">User Management</span>
+              <span class="sidebar-link-text text">User Management</span>
             </a>
           </li>
           <li class="mb-2">
@@ -145,7 +84,7 @@
               class="flex items-center p-2 hover:bg-gray-700 rounded-md"
             >
               <svg
-                class="w-6 h-6 mr-2"
+                class="w-6 h-6 mr-2 icon"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -158,7 +97,7 @@
                   d="M17 20h2a2 2 0 002-2V4a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h2m5-10l4 4m0 0l4-4m-4 4V3"
                 ></path>
               </svg>
-              <span class="sidebar-link-text">Agent Management</span>
+              <span class="sidebar-link-text text">Agent Management</span>
             </a>
           </li>
           <li class="mb-2">
@@ -168,7 +107,7 @@
               class="flex items-center p-2 hover:bg-gray-700 rounded-md"
             >
               <svg
-                class="w-6 h-6 mr-2"
+                class="w-6 h-6 mr-2 icon"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -181,7 +120,7 @@
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
                 ></path>
               </svg>
-              <span class="sidebar-link-text">Survey Management</span>
+              <span class="sidebar-link-text text">Survey Management</span>
             </a>
           </li>
           <li class="mb-2">
@@ -191,7 +130,7 @@
               class="flex items-center p-2 hover:bg-gray-700 rounded-md"
             >
               <svg
-                class="w-6 h-6 mr-2"
+                class="w-6 h-6 mr-2 icon"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -204,7 +143,7 @@
                   d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
                 ></path>
               </svg>
-              <span class="sidebar-link-text">Point Transfers</span>
+              <span class="sidebar-link-text text">Point Transfers</span>
             </a>
           </li>
           <li class="mb-2">
@@ -214,7 +153,7 @@
               class="flex items-center p-2 hover:bg-gray-700 rounded-md"
             >
               <svg
-                class="w-6 h-6 mr-2"
+                class="w-6 h-6 mr-2 icon"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -227,7 +166,7 @@
                   d="M3 10h18M7 15h10m-9 4h8a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z"
                 ></path>
               </svg>
-              <span class="sidebar-link-text">Redemption Requests</span>
+              <span class="sidebar-link-text text">Redemption Requests</span>
             </a>
           </li>
           <li class="mb-2">
@@ -237,7 +176,7 @@
               class="flex items-center p-2 hover:bg-gray-700 rounded-md"
             >
               <svg
-                class="w-6 h-6 mr-2"
+                class="w-6 h-6 mr-2 icon"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -250,7 +189,7 @@
                   d="M13 10V3L4 14h7v7l9-11h-7z"
                 ></path>
               </svg>
-              <span class="sidebar-link-text">Fraud Management</span>
+              <span class="sidebar-link-text text">Fraud Management</span>
             </a>
           </li>
           <li class="mb-2">
@@ -260,7 +199,7 @@
               class="flex items-center p-2 hover:bg-gray-700 rounded-md"
             >
               <svg
-                class="w-6 h-6 mr-2"
+                class="w-6 h-6 mr-2 icon"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -279,7 +218,7 @@
                   d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                 ></path>
               </svg>
-              <span class="sidebar-link-text">System Settings</span>
+              <span class="sidebar-link-text text">System Settings</span>
             </a>
           </li>
         </ul>
@@ -290,7 +229,7 @@
           class="w-full flex items-center p-2 text-red-400 hover:bg-gray-700 rounded-md"
         >
           <svg
-            class="w-6 h-6 mr-2"
+            class="w-6 h-6 mr-2 icon"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -303,13 +242,13 @@
               d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
             ></path>
           </svg>
-          <span class="sidebar-link-text">Logout</span>
+          <span class="sidebar-link-text text">Logout</span>
         </button>
       </div>
     </aside>
 
      Main Content 
-    <main id="main-content" class="flex-1 p-8 bg-gray-100 overflow-auto">
+    <main id="main-content" class="main-content">
       <header class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-semibold text-gray-800">Admin Dashboard</h1>
         <div class="text-gray-600">Welcome, Admin!</div>
@@ -318,24 +257,21 @@
        Dashboard Overview Section 
       <section id="dashboard-overview-section" class="section-content active">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div class="bg-white p-6 rounded-lg shadow-md">
+          <div class="card">
             <h2 class="text-lg font-medium text-gray-600">Total Users</h2>
             <p id="total-users-card" class="text-4xl font-bold text-gray-900">
               0
             </p>
           </div>
-          <div class="bg-white p-6 rounded-lg shadow-md">
+          <div class="card">
             <h2 class="text-lg font-medium text-gray-600">
               Total Surveys Completed
             </h2>
-            <p
-              id="total-surveys-card"
-              class="text-4xl font-bold text-gray-900"
-            >
+            <p id="total-surveys-card" class="text-4xl font-bold text-gray-900">
               0
             </p>
           </div>
-          <div class="bg-white p-6 rounded-lg shadow-md">
+          <div class="card">
             <h2 class="text-lg font-medium text-gray-600">
               Total Points Distributed
             </h2>
@@ -343,7 +279,7 @@
               0
             </p>
           </div>
-          <div class="bg-white p-6 rounded-lg shadow-md">
+          <div class="card">
             <h2 class="text-lg font-medium text-gray-600">
               Pending Redemptions
             </h2>
@@ -354,7 +290,7 @@
               0
             </p>
           </div>
-          <div class="bg-white p-6 rounded-lg shadow-md">
+          <div class="card">
             <h2 class="text-lg font-medium text-gray-600">
               System Reward Percentage
             </h2>
@@ -367,7 +303,7 @@
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="card mb-8">
           <h2 class="text-xl font-semibold text-gray-800 mb-4">
             Recent Activity Log
           </h2>
@@ -377,24 +313,19 @@
                 <tr>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="timestamp"
                   >
                     Timestamp
                   </th>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="type"
                   >
                     Type
                   </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Message
-                  </th>
+                  <th scope="col" class="table-header">Message</th>
                 </tr>
               </thead>
               <tbody
@@ -413,29 +344,14 @@
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           System Settings
         </h2>
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="card mb-8">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th
-                    scope="col"
-                    class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Setting
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Value
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Actions
-                  </th>
+                  <th scope="col" class="table-header">Setting</th>
+                  <th scope="col" class="table-header">Value</th>
+                  <th scope="col" class="table-header">Actions</th>
                 </tr>
               </thead>
               <tbody
@@ -454,7 +370,7 @@
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           User Management
         </h2>
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="card mb-8">
           <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-700">User List</h3>
             <div class="flex items-center space-x-4">
@@ -465,7 +381,9 @@
                   class="sr-only peer"
                   id="auto-user-approval-toggle"
                 />
-                <div class="w-11 h-6 rounded-full toggle-bg"></div>
+                <div class="toggle-bg">
+                  <div class="toggle-dot"></div>
+                </div>
                 <span
                   id="approvalStatusLabel"
                   class="ml-3 text-sm font-medium text-gray-500"
@@ -492,28 +410,28 @@
                 <tr>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="name"
                   >
                     Name
                   </th>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="email"
                   >
                     Email
                   </th>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="status"
                   >
                     Status
                   </th>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="role"
                   >
                     Role
@@ -539,7 +457,7 @@
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           Agent Management
         </h2>
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="card mb-8">
           <h3 class="text-lg font-medium text-gray-700 mb-4">Agent List</h3>
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -547,21 +465,21 @@
                 <tr>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="name"
                   >
                     Name
                   </th>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="referral_code"
                   >
                     Referral Code
                   </th>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="referred_users"
                   >
                     Referred Users
@@ -587,7 +505,7 @@
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           Survey Management
         </h2>
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="card mb-8">
           <h3 class="text-lg font-medium text-gray-700 mb-4">Survey List</h3>
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -595,21 +513,21 @@
                 <tr>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="title"
                   >
                     Title
                   </th>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="points_reward"
                   >
                     Points Reward
                   </th>
                   <th
                     scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable-header"
+                    class="table-header sortable-header"
                     data-sort-by="is_active"
                   >
                     Status
@@ -632,7 +550,7 @@
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           Point Transfers
         </h2>
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="card mb-8">
           <h3 class="text-lg font-medium text-gray-700 mb-4">Send Points</h3>
           <form
             id="send-points-form"
@@ -647,7 +565,7 @@
               <input
                 type="email"
                 id="from-user-email"
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                class="input-field"
                 placeholder="admin@example.com"
               />
             </div>
@@ -661,7 +579,7 @@
                 type="email"
                 id="to-user-email"
                 required
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                class="input-field"
                 placeholder="user@example.com"
               />
             </div>
@@ -676,21 +594,16 @@
                 id="points-amount"
                 required
                 min="1"
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                class="input-field"
               />
             </div>
             <div class="md:col-span-2">
-              <button
-                type="submit"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-              >
-                Send Points
-              </button>
+              <button type="submit" class="submit-button">Send Points</button>
             </div>
           </form>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="card mb-8">
           <h3 class="text-lg font-medium text-gray-700 mb-4">
             Transfer History
           </h3>
@@ -701,11 +614,7 @@
                 class="block text-sm font-medium text-gray-700"
                 >Start Date:</label
               >
-              <input
-                type="date"
-                id="filterStartDate"
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              />
+              <input type="date" id="filterStartDate" class="input-field" />
             </div>
             <div>
               <label
@@ -713,11 +622,7 @@
                 class="block text-sm font-medium text-gray-700"
                 >End Date:</label
               >
-              <input
-                type="date"
-                id="filterEndDate"
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-              />
+              <input type="date" id="filterEndDate" class="input-field" />
             </div>
             <div>
               <label
@@ -729,7 +634,7 @@
                 type="text"
                 id="searchEmail"
                 placeholder="user@example.com"
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                class="input-field"
               />
             </div>
             <div class="flex items-end">
@@ -745,30 +650,10 @@
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    From User
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    To User
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Amount
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Date
-                  </th>
+                  <th scope="col" class="table-header">From User</th>
+                  <th scope="col" class="table-header">To User</th>
+                  <th scope="col" class="table-header">Amount</th>
+                  <th scope="col" class="table-header">Date</th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Actions</span>
                   </th>
@@ -809,7 +694,7 @@
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           Redemption Requests
         </h2>
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="card mb-8">
           <h3 class="text-lg font-medium text-gray-700 mb-4">
             Pending Redemptions
           </h3>
@@ -817,36 +702,11 @@
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    User Email
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Points
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Type
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Destination
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Status
-                  </th>
+                  <th scope="col" class="table-header">User Email</th>
+                  <th scope="col" class="table-header">Points</th>
+                  <th scope="col" class="table-header">Type</th>
+                  <th scope="col" class="table-header">Destination</th>
+                  <th scope="col" class="table-header">Status</th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Actions</span>
                   </th>
@@ -869,30 +729,15 @@
           Fraud Management
         </h2>
 
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="card mb-8">
           <h3 class="text-lg font-medium text-gray-700 mb-4">Fraud Flags</h3>
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    User Email
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Reason
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Created At
-                  </th>
+                  <th scope="col" class="table-header">User Email</th>
+                  <th scope="col" class="table-header">Reason</th>
+                  <th scope="col" class="table-header">Created At</th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Actions</span>
                   </th>
@@ -908,7 +753,7 @@
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div class="card mb-8">
           <h3 class="text-lg font-medium text-gray-700 mb-4">
             Fraud Rules Configuration
           </h3>
@@ -916,30 +761,10 @@
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Rule Key
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Description
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Limit Value
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Action
-                  </th>
+                  <th scope="col" class="table-header">Rule Key</th>
+                  <th scope="col" class="table-header">Description</th>
+                  <th scope="col" class="table-header">Limit Value</th>
+                  <th scope="col" class="table-header">Action</th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Actions</span>
                   </th>
