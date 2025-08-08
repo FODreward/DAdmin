@@ -396,9 +396,9 @@
             ${
               isToggle
                 ? `
-              <label class="relative inline-block w-14 h-8 cursor-pointer">
+              <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" class="sr-only peer setting-toggle" id="${setting.key}-toggle" ${isChecked ? "checked" : ""} />
-                <div class="w-14 h-8 bg-gray-200 rounded-full peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all dark:border-gray-600 peer-checked:bg-green-500"></div>
+                <div class="w-11 h-6 rounded-full toggle-bg"></div>
               </label>
               <span class="ml-3 text-sm font-semibold text-gray-700" id="${setting.key}-status">${
                     isChecked ? "ON" : "OFF"
@@ -1151,13 +1151,6 @@
       
       // Initial render for the determined section on page load/refresh
       renderSectionContent(initialSectionId); // THIS IS THE KEY CHANGE FOR REFRESH
-
-      // Initial renders for dashboard sections (some might be redundant if renderSectionContent covers them)
-      // Keeping these for now if they handle specific initializations not covered by renderSectionContent
-      renderSystemSettings() // Call this here to populate systemSettings array
-      renderDashboardOverview()
-      renderActivityLog() // Initial render of activity log
-      setupUserManagementListeners() // Setup auto-approval toggle listener
 
       // Logout button functionality
       if (logoutButton) {
