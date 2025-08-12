@@ -4,7 +4,7 @@
 
 ;(() => {
   // --- API Configuration ---
-  const API_BASE_URL = "https://dansog-backend.onrender.com/api"
+  const API_BASE_URL = "https://api.survecta.com/api"
 
   // --- Session Keys ---
   const SESSION_KEY_AUTH = "isAuthenticated"
