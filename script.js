@@ -188,7 +188,7 @@
 
   // --- Data Storage (Now fetched from API) ---
   let users = []
-  let agents = []
+  const agents = []
   // const surveys = [] // No longer needed as surveys are fetched dynamically
   // const pointTransfers = [] // No longer needed as transfers are fetched dynamically
   // let redemptionRequests = [] // No longer needed as redemptions are fetched dynamically
@@ -245,8 +245,12 @@
   function setupSidebarAndNav() {
     if (sidebarToggle) {
       sidebarToggle.addEventListener("click", () => {
-        sidebar.classList.toggle("collapsed")
-        mainContent.classList.toggle("collapsed")
+        if (window.innerWidth <= 768) {
+          sidebar.classList.toggle("open")
+        } else {
+          sidebar.classList.toggle("collapsed")
+          mainContent.classList.toggle("collapsed")
+        }
       })
     }
 
@@ -308,7 +312,7 @@
           await renderSurveyManagement() // This will now show the "closed" message
           break
         case "point-transfers-section":
-          await window.renderPointTransfers() // Fixed undeclared variable error
+          window.renderPointTransfers() // Call the global function
           break
         case "redemption-requests-section":
           await renderRedemptionRequests()
@@ -479,6 +483,7 @@
   async function renderUserManagement() {
     if (!userManagementTableBody) return
     userManagementTableBody.innerHTML = ""
+
     try {
       users = await fetchApi("/admin/users", "GET", null, true)
 
@@ -488,155 +493,69 @@
         return
       }
 
-      // Apply search filter if exists
-      let filteredUsers = users
-      const searchTerm = document.getElementById("user-search")?.value?.toLowerCase()
-      if (searchTerm) {
-        filteredUsers = users.filter(
+      // Store original users for search functionality
+      window.originalUsers = users
+      renderUserTable(users)
+      setupUserSearch()
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
+      alert(`Failed to load user data: ${error.message}`)
+    }
+  }
+
+  function renderUserTable(usersToRender) {
+    userManagementTableBody.innerHTML = ""
+
+    usersToRender.forEach((user) => {
+      const row = userManagementTableBody.insertRow()
+      const joinedDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"
+      const joinedTime = user.created_at ? new Date(user.created_at).toLocaleTimeString() : ""
+
+      row.innerHTML = `
+        <td class="table-row-data">
+          <span class="user-badge user-id-badge">#${user.id}</span>
+        </td>
+        <td class="table-row-data font-medium text-gray-900">${user.name}</td>
+        <td class="table-row-data">${user.email}</td>
+        <td class="table-row-data">
+          <div class="text-sm text-gray-900">${joinedDate}</div>
+          <div class="text-xs text-gray-500">${joinedTime}</div>
+        </td>
+        <td class="table-row-data">
+          <span class="status-badge status-${user.status}">${user.status}</span>
+        </td>
+        <td class="table-row-data">
+          <span class="user-badge ${user.is_admin ? "bg-purple-100 text-purple-800" : user.is_agent ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-800"}">
+            ${user.is_admin ? "Admin" : user.is_agent ? "Agent" : "User"}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          ${user.status === "pending" ? `<button id="approve-user-${user.id}" class="action-btn bg-green-100 text-green-800 hover:bg-green-200 mr-2">Approve</button>` : ""}
+          ${user.status === "pending" ? `<button id="reject-user-${user.id}" class="action-btn bg-red-100 text-red-800 hover:bg-red-200 mr-2">Reject</button>` : ""}
+          ${user.status === "approved" ? `<button id="suspend-user-${user.id}" class="action-btn bg-yellow-100 text-yellow-800 hover:bg-yellow-200 mr-2">Suspend</button>` : ""}
+          ${user.status === "suspended" ? `<button id="reactivate-user-${user.id}" class="action-btn bg-blue-100 text-blue-800 hover:bg-blue-200 mr-2">Reactivate</button>` : ""}
+          ${!user.is_agent && !user.is_admin ? `<button id="promote-user-${user.id}" class="action-btn bg-purple-100 text-purple-800 hover:bg-purple-200">Promote to Agent</button>` : user.is_agent && !user.is_admin ? `<button id="demote-user-${user.id}" class="action-btn bg-orange-100 text-orange-800 hover:bg-orange-200">Demote from Agent</button>` : ""}
+        </td>
+      `
+    })
+
+    // Re-attach event listeners for action buttons
+    setupUserActionButtons()
+  }
+
+  function setupUserSearch() {
+    const searchInput = document.getElementById("user-search-input")
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        const searchTerm = e.target.value.toLowerCase()
+        const filteredUsers = window.originalUsers.filter(
           (user) =>
             user.email.toLowerCase().includes(searchTerm) ||
             user.name.toLowerCase().includes(searchTerm) ||
             user.id.toString().includes(searchTerm),
         )
-      }
-
-      filteredUsers.forEach((user) => {
-        const row = userManagementTableBody.insertRow()
-        const joinedDate = user.created_at
-          ? new Date(user.created_at).toLocaleDateString() + " " + new Date(user.created_at).toLocaleTimeString()
-          : "N/A"
-
-        row.innerHTML = `
-          <td class="table-row-data">
-            <div class="flex items-center">
-              <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium mr-3">
-                ${user.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div class="font-medium text-gray-900">${user.name}</div>
-                <div class="text-xs text-gray-500">ID: ${user.id}</div>
-              </div>
-            </div>
-          </td>
-          <td class="table-row-data">${user.email}</td>
-          <td class="table-row-data">
-            <span class="px-2 py-1 text-xs font-medium rounded-full ${
-              user.status === "approved"
-                ? "bg-green-100 text-green-800"
-                : user.status === "pending"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : user.status === "suspended"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-gray-100 text-gray-800"
-            }">${user.status}</span>
-          </td>
-          <td class="table-row-data">
-            <span class="px-2 py-1 text-xs font-medium rounded-full ${
-              user.is_admin
-                ? "bg-purple-100 text-purple-800"
-                : user.is_agent
-                  ? "bg-blue-100 text-blue-800"
-                  : "bg-gray-100 text-gray-800"
-            }">${user.is_admin ? "Admin" : user.is_agent ? "Agent" : "User"}</span>
-          </td>
-          <td class="table-row-data text-sm text-gray-600">${joinedDate}</td>
-          <td class="table-row-data">${user.points || 0}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <div class="flex flex-wrap gap-1 justify-end">
-              ${user.status === "pending" ? `<button id="approve-user-${user.id}" class="action-btn approve-user-btn bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs">Approve</button>` : ""}
-              ${user.status === "pending" ? `<button id="reject-user-${user.id}" class="action-btn reject-user-btn bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">Reject</button>` : ""}
-              ${user.status === "approved" ? `<button id="suspend-user-${user.id}" class="action-btn suspend-user-btn bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">Suspend</button>` : ""}
-              ${user.status === "suspended" ? `<button id="reactivate-user-${user.id}" class="action-btn reactivate-user-btn bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs">Reactivate</button>` : ""}
-              ${!user.is_agent && !user.is_admin ? `<button id="promote-user-${user.id}" class="action-btn promote-user-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs">Promote to Agent</button>` : user.is_agent && !user.is_admin ? `<button id="demote-user-${user.id}" class="action-btn demote-user-btn bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded text-xs">Demote from Agent</button>` : ""}
-            </div>
-          </td>
-        `
+        renderUserTable(filteredUsers)
       })
-
-      document.querySelectorAll(".approve-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("approve-user-", "")
-          updateUserStatus(userId, "approved")
-        })
-      })
-      document.querySelectorAll(".reject-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("reject-user-", "")
-          updateUserStatus(userId, "rejected")
-        })
-      })
-      document.querySelectorAll(".suspend-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("suspend-user-", "")
-          updateUserStatus(userId, "suspended")
-        })
-      })
-      document.querySelectorAll(".reactivate-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("reactivate-user-", "")
-          updateUserStatus(userId, "approved")
-        })
-      })
-      document.querySelectorAll(".promote-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("promote-user-", "")
-          promoteUserToAgent(userId, true)
-        })
-      })
-      document.querySelectorAll(".demote-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("demote-user-", "")
-          promoteUserToAgent(userId, false)
-        })
-      })
-
-      // Bulk actions
-      if (approveAllPendingUsersBtn) {
-        approveAllPendingUsersBtn.addEventListener("click", async () => {
-          const pendingUserIds = users.filter((user) => user.status === "pending").map((user) => user.id)
-          if (pendingUserIds.length > 0) {
-            if (confirm(`Are you sure you want to approve ${pendingUserIds.length} pending users?`)) {
-              try {
-                await fetchApi("/admin/users/bulk-approve", "POST", { user_ids: pendingUserIds }, true)
-                showNotification("All pending users approved successfully!", "success")
-                renderUserManagement()
-                renderDashboardOverview()
-              } catch (error) {
-                showNotification(`Failed to approve users: ${error.message}`, "error")
-              }
-            }
-          } else {
-            showNotification("No pending users to approve.", "info")
-          }
-        })
-      }
-
-      if (rejectAllPendingUsersBtn) {
-        rejectAllPendingUsersBtn.addEventListener("click", async () => {
-          const pendingUserIds = users.filter((user) => user.status === "pending").map((user) => user.id)
-          if (pendingUserIds.length > 0) {
-            if (
-              confirm(
-                `Are you sure you want to reject and permanently delete ${pendingUserIds.length} pending users? This action is irreversible.`,
-              )
-            ) {
-              try {
-                await fetchApi("/admin/users/bulk-reject", "POST", { user_ids: pendingUserIds }, true)
-                showNotification("All pending users rejected successfully!", "success")
-                renderUserManagement()
-                renderDashboardOverview()
-              } catch (error) {
-                showNotification(`Failed to reject users: ${error.message}`, "error")
-              }
-            }
-          } else {
-            showNotification("No pending users to reject.", "info")
-          }
-        })
-      }
-    } catch (error) {
-      console.error("Failed to fetch users:", error)
-      showNotification(`Failed to load user data: ${error.message}`, "error")
     }
   }
 
@@ -646,14 +565,14 @@
         newStatus === "rejected" &&
         !confirm("Are you sure you want to reject and permanently delete this user? This action is irreversible.")
       ) {
-        return
+        return // Stop if user cancels
       }
       await fetchApi(`/admin/users/${userId}/status`, "PUT", { status: newStatus }, true)
-      showNotification(`User status updated to ${newStatus}.`, "success")
-      renderUserManagement()
+      console.log(`User status updated to ${newStatus}.`) // Changed from alert
+      renderUserManagement() // Re-render table
       renderDashboardOverview()
     } catch (error) {
-      showNotification(`Failed to update user status: ${error.message}`, "error")
+      alert(`Failed to update user status: ${error.message}`)
     }
   }
 
@@ -665,102 +584,12 @@
         { user_id: Number.parseInt(userId), is_agent: isAgent },
         true,
       )
-      showNotification(
-        `Agent role ${isAgent ? "assigned" : "removed"}. Referral code: ${data.referral_code || "N/A"}`,
-        "success",
-      )
-      renderUserManagement()
-      renderAgentManagement()
+      console.log(`Agent role ${isAgent ? "assigned" : "removed"}. Referral code: ${data.referral_code || "N/A"}`) // Changed from alert
+      renderUserManagement() // Re-render user table
+      renderAgentManagement() // Re-render agent table
     } catch (error) {
-      showNotification(`Failed to update agent role: ${error.message}`, "error")
+      alert(`Failed to update agent role: ${error.message}`)
     }
-  }
-
-  // Add this new function:
-  async function setupUserManagementListeners() {
-    const toggle = document.getElementById("auto-user-approval-toggle")
-    const toggleBg = toggle.nextElementSibling // The div with class toggle-bg
-    const toggleDot = toggleBg.firstElementChild // The div with class toggle-dot
-    const label = document.getElementById("approvalStatusLabel")
-
-    if (!toggle) return
-
-    function updateLabelUI(checked) {
-      if (!label) return
-
-      if (checked) {
-        label.textContent = "Auto-Approval is ON"
-        label.classList.remove("text-gray-500")
-        label.classList.add("text-green-600", "font-semibold")
-      } else {
-        label.textContent = "Auto-Approval is OFF"
-        label.classList.remove("text-green-600")
-        label.classList.add("text-gray-500")
-      }
-    }
-
-    // Load current setting
-    try {
-      const res = await fetchApi("/admin/settings", "GET", null, true)
-      const setting = res.find((s) => s.key === "auto_user_approval")
-
-      if (setting) {
-        const isOn = setting.value === "true"
-        toggle.checked = isOn
-        if (isOn) {
-          toggleBg.classList.add("checked")
-          toggleDot.classList.add("checked")
-        } else {
-          toggleBg.classList.remove("checked")
-          toggleDot.classList.remove("checked")
-        }
-        updateLabelUI(isOn)
-      }
-    } catch (error) {
-      console.error("Failed to load auto approval setting:", error)
-    }
-
-    // Listen for toggle changes
-    toggle.addEventListener("change", async (e) => {
-      const newValue = e.target.checked.toString()
-      const checked = e.target.checked
-
-      if (checked) {
-        toggleBg.classList.add("checked")
-        toggleDot.classList.add("checked")
-      } else {
-        toggleBg.classList.remove("checked")
-        toggleDot.classList.remove("checked")
-      }
-
-      try {
-        await fetchApi(
-          "/admin/settings",
-          "PUT",
-          {
-            key: "auto_user_approval",
-            value: newValue,
-            description: "Automatically approve new user registrations", // Keep description for consistency
-          },
-          true,
-        )
-
-        updateLabelUI(e.target.checked)
-        console.log(`Auto User Approval set to: ${newValue}`) // Changed from alert
-      } catch (error) {
-        alert(`Failed to update setting: ${error.message}`)
-        e.target.checked = !e.target.checked // Revert toggle state on error
-        if (e.target.checked) {
-          // Revert visual state
-          toggleBg.classList.add("checked")
-          toggleDot.classList.add("checked")
-        } else {
-          toggleBg.classList.remove("checked")
-          toggleDot.classList.remove("checked")
-        }
-        updateLabelUI(e.target.checked)
-      }
-    })
   }
 
   // --- Agent Management ---
@@ -768,56 +597,110 @@
     if (!agentManagementTableBody) return
     agentManagementTableBody.innerHTML = ""
 
-    const searchInput = document.getElementById("agent-search-input")
-    const searchTerm = searchInput ? searchInput.value.toLowerCase() : ""
-
     try {
-      const allUsers = await fetchApi("/admin/users", "GET", null, true)
-      agents = allUsers.filter((user) => user.is_agent)
+      const agents = await fetchApi("/admin/agents", "GET", null, true)
 
       if (agents.length === 0) {
         const row = agentManagementTableBody.insertRow()
-        row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No agents found.</td>`
+        row.innerHTML = `<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No agents found.</td>`
         return
       }
 
-      const filteredAgents = agents.filter(
-        (agent) =>
-          !searchTerm ||
-          agent.name.toLowerCase().includes(searchTerm) ||
-          agent.email.toLowerCase().includes(searchTerm) ||
-          agent.id.toString().includes(searchTerm) ||
-          (agent.referral_code && agent.referral_code.toLowerCase().includes(searchTerm)),
-      )
-
-      filteredAgents.forEach((agent) => {
-        const row = agentManagementTableBody.insertRow()
-        row.innerHTML = `
-              <td class="table-row-data">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                  ID: ${agent.id}
-                </span>
-              </td>
-              <td class="table-row-data font-medium text-gray-900">${agent.name}</td>
-              <td class="table-row-data">${agent.referral_code || "N/A"}</td>
-              <td class="table-row-data text-sm text-gray-500">${agent.agent_appointed_at ? new Date(agent.agent_appointed_at).toLocaleDateString() : "N/A"}</td>
-              <td class="table-row-data">${agent.referred_users_count || 0}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button id="demote-agent-${agent.id}" class="action-btn demote-agent-btn text-red-600 hover:text-red-900">Demote Agent</button>
-              </td>
-          `
-      })
-
-      document.querySelectorAll(".demote-agent-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const agentId = e.target.id.replace("demote-agent-", "")
-          promoteUserToAgent(agentId, false) // Use the same promote/demote function
-        })
-      })
+      // Store original agents for search functionality
+      window.originalAgents = agents
+      renderAgentTable(agents)
+      setupAgentSearch()
     } catch (error) {
       console.error("Failed to fetch agents:", error)
       alert(`Failed to load agent data: ${error.message}`)
     }
+  }
+
+  function renderAgentTable(agentsToRender) {
+    agentManagementTableBody.innerHTML = ""
+
+    agentsToRender.forEach((agent) => {
+      const row = agentManagementTableBody.insertRow()
+      const appointedDate = agent.agent_appointed_at ? new Date(agent.agent_appointed_at).toLocaleDateString() : "N/A"
+      const appointedTime = agent.agent_appointed_at ? new Date(agent.agent_appointed_at).toLocaleTimeString() : ""
+
+      row.innerHTML = `
+        <td class="table-row-data">
+          <span class="user-badge user-id-badge">#${agent.id}</span>
+        </td>
+        <td class="table-row-data font-medium text-gray-900">${agent.name}</td>
+        <td class="table-row-data">${agent.email}</td>
+        <td class="table-row-data">
+          <span class="user-badge bg-indigo-100 text-indigo-800">${agent.referral_code}</span>
+        </td>
+        <td class="table-row-data">
+          <div class="text-sm text-gray-900">${appointedDate}</div>
+          <div class="text-xs text-gray-500">${appointedTime}</div>
+        </td>
+        <td class="table-row-data">
+          <span class="user-badge bg-green-100 text-green-800">${agent.referred_users || 0}</span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <button class="action-btn bg-blue-100 text-blue-800 hover:bg-blue-200">View Details</button>
+        </td>
+      `
+    })
+  }
+
+  function setupAgentSearch() {
+    const searchInput = document.getElementById("agent-search-input")
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        const searchTerm = e.target.value.toLowerCase()
+        const filteredAgents = window.originalAgents.filter(
+          (agent) =>
+            agent.email.toLowerCase().includes(searchTerm) ||
+            agent.name.toLowerCase().includes(searchTerm) ||
+            agent.id.toString().includes(searchTerm) ||
+            agent.referral_code.toLowerCase().includes(searchTerm),
+        )
+        renderAgentTable(filteredAgents)
+      })
+    }
+  }
+
+  function setupUserActionButtons() {
+    document.querySelectorAll(".approve-user-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const userId = e.target.id.replace("approve-user-", "")
+        updateUserStatus(userId, "approved")
+      })
+    })
+    document.querySelectorAll(".reject-user-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const userId = e.target.id.replace("reject-user-", "")
+        updateUserStatus(userId, "rejected")
+      })
+    })
+    document.querySelectorAll(".suspend-user-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const userId = e.target.id.replace("suspend-user-", "")
+        updateUserStatus(userId, "suspended")
+      })
+    })
+    document.querySelectorAll(".reactivate-user-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const userId = e.target.id.replace("reactivate-user-", "")
+        updateUserStatus(userId, "approved")
+      })
+    })
+    document.querySelectorAll(".promote-user-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const userId = e.target.id.replace("promote-user-", "")
+        promoteUserToAgent(userId, true)
+      })
+    })
+    document.querySelectorAll(".demote-user-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const userId = e.target.id.replace("demote-user-", "")
+        promoteUserToAgent(userId, false)
+      })
+    })
   }
 
   // --- Survey Management ---
@@ -1238,6 +1121,30 @@
     }
   }
 
+  function setupUserManagementListeners() {
+    if (autoUserApprovalToggle) {
+      const approvalStatusLabel = document.getElementById("approvalStatusLabel")
+
+      autoUserApprovalToggle.addEventListener("change", async (e) => {
+        const isEnabled = e.target.checked
+        try {
+          await fetchApi("/admin/settings/auto-user-approval", "PUT", { enabled: isEnabled }, true)
+          if (approvalStatusLabel) {
+            approvalStatusLabel.textContent = isEnabled ? "Auto-Approval is ON" : "Auto-Approval is OFF"
+            approvalStatusLabel.className = isEnabled
+              ? "ml-3 text-sm font-medium text-green-600"
+              : "ml-3 text-sm font-medium text-gray-500"
+          }
+          console.log(`Auto-approval ${isEnabled ? "enabled" : "disabled"}`)
+        } catch (error) {
+          console.error("Failed to update auto-approval setting:", error)
+          e.target.checked = !isEnabled // Revert toggle
+          alert(`Failed to update auto-approval: ${error.message}`)
+        }
+      })
+    }
+  }
+
   // --- Global Event Listener for all pages ---
   document.addEventListener("DOMContentLoaded", () => {
     protectRoute() // Run protection on every page load
@@ -1284,18 +1191,4 @@
       }
     }
   })
-
-  function showNotification(message, type = "info") {
-    const notificationDiv = document.createElement("div")
-    notificationDiv.className = `fixed top-4 right-4 z-50 p-4 rounded shadow-lg text-white ${
-      type === "success" ? "bg-green-500" : type === "error" ? "bg-red-500" : "bg-blue-500"
-    }`
-    notificationDiv.textContent = message
-    document.body.appendChild(notificationDiv)
-
-    // Remove the notification after 3 seconds
-    setTimeout(() => {
-      document.body.removeChild(notificationDiv)
-    }, 3000)
-  }
 })()
