@@ -1,7 +1,8 @@
-// Enhanced Admin Dashboard Script with Modern Features
-// Includes responsive design, search functionality, and improved user management
+// This script handles global utilities, authentication, and routing.
+// It exposes `fetchApi`, `getSession`, `setSession`, `clearSession`,
+// `SESSION_KEY_TOKEN`, `SESSION_KEY_USER_DATA` globally via the window object.
 
-;(() => {
+(() => {
   // --- API Configuration ---
   const API_BASE_URL = "https://api.survecta.com/api"
 
@@ -9,14 +10,7 @@
   const SESSION_KEY_AUTH = "isAuthenticated"
   const SESSION_KEY_TOKEN = "accessToken"
   const SESSION_KEY_PIN_VERIFIED = "isPinVerified"
-  const SESSION_KEY_USER_DATA = "userData"
-
-  // --- Global State ---
-  let currentSection = "dashboard-overview-section"
-  let users = []
-  let agents = []
-  let filteredUsers = []
-  let filteredAgents = []
+  const SESSION_KEY_USER_DATA = "userData" // Store user data from login
 
   // --- Helper Functions for Session Storage ---
   function setSession(key, value) {
@@ -32,7 +26,7 @@
     sessionStorage.clear()
   }
 
-  // --- Generic API Fetcher with Enhanced Error Handling ---
+  // --- Generic API Fetcher ---
   async function fetchApi(endpoint, method = "GET", body = null, requiresAuth = false) {
     const url = `${API_BASE_URL}${endpoint}`
     const headers = {
@@ -44,7 +38,7 @@
       if (!token) {
         console.error("Authentication required, but no token found. Redirecting to login.")
         clearSession()
-        window.location.href = "/"
+        window.location.href = "/" // Redirect to login
         throw new Error("Unauthorized")
       }
       headers["Authorization"] = `Bearer ${token}`
@@ -62,28 +56,27 @@
     try {
       const response = await fetch(url, options)
 
+      // --- NEW: Session Expiry Check ---
       if (response.status === 401) {
-        console.warn("Session expired or unauthorized. Logging out.")
-        clearSession()
-        window.location.href = "/"
-        throw new Error("Session expired or unauthorized.")
+        console.warn("Session expired or unauthorized. Logging out.");
+        clearSession();
+        window.location.href = "/"; // Redirect to login page
+        throw new Error("Session expired or unauthorized."); // Stop further processing
       }
+      // --- END NEW ---
 
       const data = await response.json()
 
       if (!response.ok) {
         console.error("API Error:", data.detail || response.statusText)
-        const errorMessage = data.detail
-          ? typeof data.detail === "string"
-            ? data.detail
-            : JSON.stringify(data.detail)
-          : response.statusText
-        throw new Error(errorMessage || "Something went wrong")
+        // Improved error message handling
+        const errorMessage = data.detail ? (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)) : response.statusText;
+        throw new Error(errorMessage || "Something went wrong");
       }
       return data
     } catch (error) {
       console.error("Network or API call error:", error)
-      throw error
+      throw error // Re-throw to be caught by specific handlers
     }
   }
 
@@ -93,118 +86,206 @@
     const isPinVerified = getSession(SESSION_KEY_PIN_VERIFIED)
     const currentPath = window.location.pathname
 
+    // If on root (login page), and already authenticated, redirect to PIN or Dashboard
     if (currentPath === "/" || currentPath.includes("index.html")) {
+      // Covers root index.html
       if (isAuthenticated) {
         if (isPinVerified) {
-          window.location.href = "/dashboard/"
+          window.location.href = "/dashboard/" // Already verified, go to dashboard folder
         } else {
-          window.location.href = "/pin/"
+          window.location.href = "/pin/" // Authenticated, but not PIN verified, go to pin folder
         }
       }
-      return
+      return // Stay on login page if not authenticated
     }
 
+    // If on PIN verify page (inside /pin/ folder)
     if (currentPath.includes("/pin/")) {
       if (!isAuthenticated) {
-        window.location.href = "/"
+        window.location.href = "/" // Not authenticated, go to root login
       } else if (isPinVerified) {
-        window.location.href = "/dashboard/"
+        window.location.href = "/dashboard/" // Already PIN verified, go to dashboard folder
       }
-      return
+      return // Stay on PIN page if authenticated but not verified
     }
 
+    // For dashboard (inside /dashboard/ folder) or any other protected page
     if (currentPath.includes("/dashboard/")) {
       if (!isAuthenticated || !isPinVerified) {
-        clearSession()
-        window.location.href = "/"
+        clearSession() // Clear any partial session data
+        window.location.href = "/" // Not authenticated or PIN verified, go to root login
       }
     }
   }
 
-  // --- Mobile Menu Functionality ---
-  function initializeMobileMenu() {
-    const mobileMenuToggle = document.getElementById("mobile-menu-toggle")
-    const sidebar = document.getElementById("sidebar")
-    const mobileOverlay = document.getElementById("mobile-overlay")
-    const sidebarToggle = document.getElementById("sidebar-toggle")
+  // --- Login Form Logic ---
+  async function handleLoginForm() {
+    const loginForm = document.getElementById("login-form")
+    const emailInput = document.getElementById("email")
+    const passwordInput = document.getElementById("password")
+    const errorMessageDiv = document.getElementById("login-error-message")
 
-    if (mobileMenuToggle) {
-      mobileMenuToggle.addEventListener("click", () => {
-        sidebar.classList.add("open")
-        mobileOverlay.classList.remove("hidden")
+    if (loginForm) {
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault()
+        const email = emailInput.value
+        const password = passwordInput.value
+        // Assume device fingerprint, IP, and user agent are handled on backend or not strictly required for login flow
+        const device_fingerprint = "browser_fingerprint_dummy" // Replace with actual fingerprinting
+        const ip_address = "127.0.0.1" // Replace with actual IP detection
+        const user_agent = navigator.userAgent
+
+        try {
+          const data = await fetchApi("/auth/login", "POST", { email, password, device_fingerprint, ip_address, user_agent })
+          setSession(SESSION_KEY_AUTH, true)
+          setSession(SESSION_KEY_TOKEN, data.access_token)
+          setSession(SESSION_KEY_USER_DATA, data.user) // Store user data
+          errorMessageDiv.classList.add("hidden")
+          window.location.href = "/pin/" // Redirect to PIN verification in its folder
+        } catch (error) {
+          errorMessageDiv.textContent = error.message || "Login failed. Please try again."
+          errorMessageDiv.classList.remove("hidden")
+        }
       })
     }
+  }
 
+  // --- PIN Verification Form Logic ---
+  async function handlePinForm() {
+    const pinForm = document.getElementById("pin-form")
+    const pinInput = document.getElementById("pin")
+    const errorMessageDiv = document.getElementById("pin-error-message")
+
+    if (pinForm) {
+      pinForm.addEventListener("submit", async (e) => {
+        e.preventDefault()
+        const pin = pinInput.value
+
+        try {
+          await fetchApi("/auth/verify-pin", "POST", { pin }, true) // Requires auth
+          setSession(SESSION_KEY_PIN_VERIFIED, true)
+          errorMessageDiv.classList.add("hidden")
+          window.location.href = "/dashboard/" // Redirect to dashboard in its folder
+        } catch (error) {
+          errorMessageDiv.textContent = error.message || "PIN verification failed. Please try again."
+          errorMessageDiv.classList.remove("hidden")
+        }
+      })
+    }
+  }
+
+  // --- Dashboard Specific Logic ---
+
+  // --- Data Storage (Now fetched from API) ---
+  const users = []
+  const agents = []
+  let filteredUsers = [] // Added for search functionality
+  let filteredAgents = [] // Added for search functionality
+  // const surveys = [] // No longer needed as surveys are fetched dynamically
+  // const pointTransfers = [] // No longer needed as transfers are fetched dynamically
+  // let redemptionRequests = [] // No longer needed as redemptions are fetched dynamically
+  // const systemSettings = [] // No longer needed as settings are fetched dynamically
+
+  // --- DOM Elements (Dashboard) ---
+  let sidebar, mainContent, sidebarToggle, navLinks, sections
+  let totalUsersCard, totalSurveysCard, totalPointsCard, pendingRedemptionsCard, rewardPercentageCard
+  let systemSettingsTableBody,
+    userManagementTableBody,
+    agentManagementTableBody,
+    surveyManagementTableBody,
+    pointTransfersTableBody,
+    redemptionRequestsTableBody,
+    activityLogTableBody
+  let autoUserApprovalToggle, approveAllPendingUsersBtn, rejectAllPendingUsersBtn
+  let sendPointsForm
+  let logoutButton
+  let fraudFlagsTableBody;
+  let fraudRulesTableBody; // Added for fraud rules
+
+  function initializeDashboardElements() {
+    sidebar = document.getElementById("sidebar")
+    mainContent = document.getElementById("main-content")
+    sidebarToggle = document.getElementById("sidebar-toggle")
+    navLinks = document.querySelectorAll("#sidebar ul li a")
+    sections = document.querySelectorAll(".section-content")
+
+    totalUsersCard = document.getElementById("total-users-card")
+    totalSurveysCard = document.getElementById("total-surveys-card")
+    totalPointsCard = document.getElementById("total-points-card")
+    pendingRedemptionsCard = document.getElementById("pending-redemptions-card")
+    rewardPercentageCard = document.getElementById("reward-percentage-card") // Added
+
+    systemSettingsTableBody = document.getElementById("system-settings-table-body")
+    userManagementTableBody = document.getElementById("user-management-table-body")
+    agentManagementTableBody = document.getElementById("agent-management-table-body")
+    surveyManagementTableBody = document.getElementById("survey-management-table-body")
+    pointTransfersTableBody = document.getElementById("pointTransfersTableBody") // Corrected ID
+    redemptionRequestsTableBody = document.getElementById("redemption-requests-table-body")
+    activityLogTableBody = document.getElementById("activity-log-table-body")
+
+    autoUserApprovalToggle = document.getElementById("auto-user-approval-toggle")
+    approveAllPendingUsersBtn = document.getElementById("approve-all-pending-users-btn")
+    rejectAllPendingUsersBtn = document.getElementById("reject-all-pending-users-btn")
+
+    sendPointsForm = document.getElementById("send-points-form")
+    logoutButton = document.getElementById("logout-button")
+    fraudFlagsTableBody = document.getElementById("fraud-flags-table-body");
+    fraudRulesTableBody = document.getElementById("fraud-rules-table-body"); // Added for fraud rules
+  }
+
+  // --- Sidebar & Navigation Logic ---
+  function setupSidebarAndNav() {
     if (sidebarToggle) {
       sidebarToggle.addEventListener("click", () => {
-        sidebar.classList.remove("open")
-        mobileOverlay.classList.add("hidden")
+        sidebar.classList.toggle("collapsed")
+        mainContent.classList.toggle("collapsed")
       })
     }
 
-    if (mobileOverlay) {
-      mobileOverlay.addEventListener("click", () => {
-        sidebar.classList.remove("open")
-        mobileOverlay.classList.add("hidden")
+    if (navLinks) {
+      navLinks.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault()
+          const targetSectionId = link.id.replace("-link", "-section")
+
+          // Update URL hash without full page reload
+          history.pushState(null, '', `#${targetSectionId}`);
+
+          navLinks.forEach((nav) => nav.classList.remove("bg-gray-700", "text-white"))
+          sections.forEach((sec) => sec.classList.remove("active"))
+
+          link.classList.add("bg-gray-700", "text-white")
+          document.getElementById(targetSectionId).classList.add("active")
+
+          renderSectionContent(targetSectionId)
+        })
       })
     }
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', () => {
+      const hash = window.location.hash.substring(1); // Remove '#'
+      const targetSectionId = hash || 'dashboard-overview-section'; // Default if no hash
+
+      navLinks.forEach((nav) => nav.classList.remove("bg-gray-700", "text-white"));
+      sections.forEach((sec) => sec.classList.remove("active"));
+
+      const correspondingLink = document.getElementById(targetSectionId.replace("-section", "-link"));
+      if (correspondingLink) {
+        correspondingLink.classList.add("bg-gray-700", "text-white");
+      }
+      document.getElementById(targetSectionId).classList.add("active");
+      renderSectionContent(targetSectionId);
+    });
   }
 
-  // --- Navigation Functionality ---
-  function initializeNavigation() {
-    const navLinks = document.querySelectorAll(".nav-link")
-    const sections = document.querySelectorAll(".section-content")
-    const pageTitle = document.getElementById("page-title")
-
-    navLinks.forEach((link) => {
-      link.addEventListener("click", async (e) => {
-        e.preventDefault()
-
-        // Remove active class from all links
-        navLinks.forEach((l) => l.classList.remove("bg-gray-800"))
-
-        // Add active class to clicked link
-        link.classList.add("bg-gray-800")
-
-        // Hide all sections
-        sections.forEach((section) => section.classList.remove("active"))
-
-        // Show target section
-        const targetId = link.id.replace("-link", "-section")
-        const targetSection = document.getElementById(targetId)
-
-        if (targetSection) {
-          targetSection.classList.add("active")
-          currentSection = targetId
-
-          // Update page title
-          const title = link.querySelector(".sidebar-text").textContent
-          if (pageTitle) {
-            pageTitle.textContent = title
-          }
-
-          // Load section content
-          await renderSectionContent(targetId)
-        }
-
-        // Close mobile menu
-        const sidebar = document.getElementById("sidebar")
-        const mobileOverlay = document.getElementById("mobile-overlay")
-        if (sidebar && mobileOverlay) {
-          sidebar.classList.remove("open")
-          mobileOverlay.classList.add("hidden")
-        }
-      })
-    })
-  }
-
-  // --- Section Content Rendering ---
   async function renderSectionContent(sectionId) {
+    // Add loading indicators here if desired
     try {
       switch (sectionId) {
         case "dashboard-overview-section":
           await renderDashboardOverview()
-          await renderActivityLog()
+          await renderActivityLog() // Also render activity log on dashboard overview
           break
         case "system-settings-section":
           await renderSystemSettings()
@@ -216,7 +297,7 @@
           await renderAgentManagement()
           break
         case "survey-management-section":
-          await renderSurveyManagement()
+          await renderSurveyManagement() // This will now show the "closed" message
           break
         case "point-transfers-section":
           await renderPointTransfers()
@@ -225,923 +306,965 @@
           await renderRedemptionRequests()
           break
         case "fraud-management-section":
-          await renderFraudManagement()
-          await renderFraudRules()
-          break
+          await renderFraudManagement();
+          await renderFraudRules(); // Render fraud rules when fraud management section is active
+          break;
       }
     } catch (error) {
       console.error(`Error rendering section ${sectionId}:`, error)
-      showNotification(`Failed to load ${sectionId.replace("-section", "").replace("-", " ")}`, "error")
+      alert(
+        `Failed to load data for ${sectionId.replace("-section", "").replace("-", " ")}. Please try again or check console for details.`,
+      )
     }
   }
 
   // --- Dashboard Overview ---
   async function renderDashboardOverview() {
     try {
-      const stats = await fetchApi("/admin/dashboard/stats", "GET", null, true)
-
-      const totalUsersCard = document.getElementById("total-users-card")
-      const totalSurveysCard = document.getElementById("total-surveys-card")
-      const totalPointsCard = document.getElementById("total-points-card")
-      const pendingRedemptionsCard = document.getElementById("pending-redemptions-card")
-
+      const stats = await fetchApi("/admin/dashboard/stats", "GET", null, true) // Fetch admin dashboard stats
       if (totalUsersCard) totalUsersCard.textContent = stats.total_users?.toLocaleString() || "0"
       if (totalSurveysCard) totalSurveysCard.textContent = stats.total_surveys_completed?.toLocaleString() || "0"
       if (totalPointsCard) totalPointsCard.textContent = stats.total_points_distributed?.toLocaleString() || "0"
       if (pendingRedemptionsCard)
         pendingRedemptionsCard.textContent = stats.pending_redemptions?.toLocaleString() || "0"
+      if (rewardPercentageCard) rewardPercentageCard.textContent = stats.reward_percentage + "%" || "N/A"
     } catch (error) {
       console.error("Failed to fetch dashboard stats:", error)
-      showNotification("Failed to load dashboard overview", "error")
+      alert(`Failed to load dashboard overview: ${error.message}`)
     }
   }
 
   // --- Activity Log ---
   async function renderActivityLog() {
-    const activityLogTableBody = document.getElementById("activity-log-table-body")
     if (!activityLogTableBody) return
-
     activityLogTableBody.innerHTML = ""
-
     try {
+      // Note: This endpoint '/dashboard/activity' returns logs for the *current authenticated user*.
+      // For a true system-wide admin activity log, a different backend endpoint would be needed.
       const logs = await fetchApi("/dashboard/activity", "GET", null, true)
-
       if (logs.length === 0) {
         const row = activityLogTableBody.insertRow()
-        row.innerHTML = `<td colspan="3" class="table-cell text-center text-gray-500">No recent activity.</td>`
-        return
+        row.innerHTML = `<td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No recent activity.</td>`
+        return;
       }
-
       logs.forEach((log) => {
         const row = activityLogTableBody.insertRow()
-        row.className = "table-row"
         row.innerHTML = `
-                    <td class="table-cell">${new Date(log.timestamp).toLocaleString()}</td>
-                    <td class="table-cell">
-                        <span class="status-badge status-active">
-                            ${log.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                        </span>
-                    </td>
-                    <td class="table-cell">${log.message}</td>
-                `
+          <td class="table-row-data">${new Date(log.timestamp).toLocaleString()}</td>
+          <td class="table-row-data font-medium text-gray-900">${log.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
+          <td class="table-row-data">${log.message}</td>
+        `
       })
     } catch (error) {
       console.error("Failed to fetch activity logs:", error)
-      showNotification("Failed to load activity logs", "error")
-    }
-  }
-
-  // --- User Management with Enhanced Features ---
-  async function renderUserManagement() {
-    const userTableBody = document.getElementById("user-management-table-body")
-    const usersLoading = document.getElementById("users-loading")
-
-    if (!userTableBody) return
-
-    // Show loading
-    if (usersLoading) {
-      usersLoading.classList.remove("hidden")
-    }
-
-    userTableBody.innerHTML = ""
-
-    try {
-      users = await fetchApi("/admin/users", "GET", null, true)
-      filteredUsers = [...users]
-
-      await setupUserManagementListeners()
-      renderUsersTable()
-    } catch (error) {
-      console.error("Failed to fetch user data:", error)
-      showNotification("Failed to load user data", "error")
-    } finally {
-      // Hide loading
-      if (usersLoading) {
-        usersLoading.classList.add("hidden")
-      }
-    }
-  }
-
-  function renderUsersTable() {
-    const userTableBody = document.getElementById("user-management-table-body")
-    if (!userTableBody) return
-
-    userTableBody.innerHTML = ""
-
-    if (filteredUsers.length === 0) {
-      const row = userTableBody.insertRow()
-      row.innerHTML = `<td colspan="7" class="table-cell text-center text-gray-500">No users found.</td>`
-      return
-    }
-
-    filteredUsers.forEach((user) => {
-      const row = userTableBody.insertRow()
-      row.className = "table-row"
-
-      row.innerHTML = `
-                <td class="table-cell">
-                    <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">#${user.id}</span>
-                </td>
-                <td class="table-cell">
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center mr-3">
-                            <span class="text-white text-sm font-medium">${user.name ? user.name.charAt(0).toUpperCase() : "U"}</span>
-                        </div>
-                        <span class="font-medium">${user.name || "N/A"}</span>
-                    </div>
-                </td>
-                <td class="table-cell">
-                    <div class="flex flex-col">
-                        <span class="font-medium">${user.email}</span>
-                        <span class="text-xs text-gray-500">ID: ${user.id}</span>
-                    </div>
-                </td>
-                <td class="table-cell">
-                    <span class="status-badge ${getStatusClass(user.status)}">
-                        ${user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : "Unknown"}
-                    </span>
-                </td>
-                <td class="table-cell">
-                    <span class="status-badge ${user.is_admin ? "status-pending" : "status-active"}">
-                        ${user.is_admin ? "Admin" : "User"}
-                    </span>
-                </td>
-                <td class="table-cell">
-                    <span class="font-semibold text-green-600">${user.points || 0}</span>
-                </td>
-                <td class="table-cell">
-                    <div class="flex space-x-2">
-                        ${
-                          user.status === "pending"
-                            ? `
-                            <button class="btn-success text-xs px-2 py-1" onclick="approveUser(${user.id})">
-                                Approve
-                            </button>
-                            <button class="btn-danger text-xs px-2 py-1" onclick="rejectUser(${user.id})">
-                                Reject
-                            </button>
-                        `
-                            : `
-                            <button class="btn-secondary text-xs px-2 py-1" onclick="viewUserDetails(${user.id})">
-                                View
-                            </button>
-                        `
-                        }
-                    </div>
-                </td>
-            `
-    })
-  }
-
-  function setupUserSearch() {
-    const userSearch = document.getElementById("user-search")
-    if (!userSearch) return
-
-    userSearch.addEventListener("input", (e) => {
-      const searchTerm = e.target.value.toLowerCase().trim()
-
-      if (searchTerm === "") {
-        filteredUsers = [...users]
-      } else {
-        filteredUsers = users.filter(
-          (user) =>
-            user.email.toLowerCase().includes(searchTerm) ||
-            user.id.toString().includes(searchTerm) ||
-            (user.name && user.name.toLowerCase().includes(searchTerm)),
-        )
-      }
-
-      renderUsersTable()
-    })
-  }
-
-  async function renderAgentManagement() {
-    const agentTableBody = document.getElementById("agent-management-table-body")
-    if (!agentTableBody) return
-
-    agentTableBody.innerHTML = ""
-
-    try {
-      agents = await fetchApi("/admin/agents", "GET", null, true)
-      filteredAgents = [...agents]
-
-      setupAgentSearch()
-      renderAgentsTable()
-    } catch (error) {
-      console.error("Failed to fetch agent data:", error)
-      showNotification("Failed to load agent data", "error")
-    }
-  }
-
-  function renderAgentsTable() {
-    const agentTableBody = document.getElementById("agent-management-table-body")
-    if (!agentTableBody) return
-
-    agentTableBody.innerHTML = ""
-
-    if (filteredAgents.length === 0) {
-      const row = agentTableBody.insertRow()
-      row.innerHTML = `<td colspan="6" class="table-cell text-center text-gray-500">No agents found.</td>`
-      return
-    }
-
-    filteredAgents.forEach((agent) => {
-      const row = agentTableBody.insertRow()
-      row.className = "table-row"
-
-      row.innerHTML = `
-                <td class="table-cell">
-                    <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">#${agent.id}</span>
-                </td>
-                <td class="table-cell">
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center mr-3">
-                            <span class="text-white text-sm font-medium">${agent.name ? agent.name.charAt(0).toUpperCase() : "A"}</span>
-                        </div>
-                        <span class="font-medium">${agent.name || "N/A"}</span>
-                    </div>
-                </td>
-                <td class="table-cell">${agent.email}</td>
-                <td class="table-cell">
-                    <span class="font-mono bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
-                        ${agent.referral_code || "N/A"}
-                    </span>
-                </td>
-                <td class="table-cell">
-                    <span class="font-semibold text-primary-600">${agent.referred_users || 0}</span>
-                </td>
-                <td class="table-cell">
-                    <button class="btn-secondary text-xs px-2 py-1" onclick="viewAgentDetails(${agent.id})">
-                        View Details
-                    </button>
-                </td>
-            `
-    })
-  }
-
-  function setupAgentSearch() {
-    const agentSearch = document.getElementById("agent-search")
-    if (!agentSearch) return
-
-    agentSearch.addEventListener("input", (e) => {
-      const searchTerm = e.target.value.toLowerCase().trim()
-
-      if (searchTerm === "") {
-        filteredAgents = [...agents]
-      } else {
-        filteredAgents = agents.filter(
-          (agent) =>
-            agent.email.toLowerCase().includes(searchTerm) ||
-            agent.id.toString().includes(searchTerm) ||
-            (agent.name && agent.name.toLowerCase().includes(searchTerm)) ||
-            (agent.referral_code && agent.referral_code.toLowerCase().includes(searchTerm)),
-        )
-      }
-
-      renderAgentsTable()
-    })
-  }
-
-  // --- Enhanced Toggle Functionality ---
-  async function setupUserManagementListeners() {
-    const toggle = document.getElementById("auto-user-approval-toggle")
-    const label = document.getElementById("approval-status-label")
-
-    if (!toggle) return
-
-    function updateToggleUI(checked) {
-      const toggleSwitch = toggle.parentElement.querySelector(".toggle-switch")
-      const toggleDot = toggle.parentElement.querySelector(".toggle-dot")
-
-      if (checked) {
-        toggleSwitch.classList.add("checked")
-        toggleDot.classList.add("checked")
-        if (label) {
-          label.textContent = "Auto-Approval ON"
-          label.classList.remove("text-gray-700")
-          label.classList.add("text-green-600", "font-semibold")
-        }
-      } else {
-        toggleSwitch.classList.remove("checked")
-        toggleDot.classList.remove("checked")
-        if (label) {
-          label.textContent = "Auto-Approval OFF"
-          label.classList.remove("text-green-600", "font-semibold")
-          label.classList.add("text-gray-700")
-        }
-      }
-    }
-
-    // Load current setting
-    try {
-      const settings = await fetchApi("/admin/settings", "GET", null, true)
-      const setting = settings.find((s) => s.key === "auto_user_approval")
-
-      if (setting) {
-        const isOn = setting.value === "true"
-        toggle.checked = isOn
-        updateToggleUI(isOn)
-      }
-    } catch (error) {
-      console.error("Failed to load auto approval setting:", error)
-    }
-
-    // Listen for toggle changes
-    toggle.addEventListener("change", async (e) => {
-      const newValue = e.target.checked.toString()
-
-      try {
-        await fetchApi(
-          "/admin/settings",
-          "PUT",
-          {
-            key: "auto_user_approval",
-            value: newValue,
-            description: "Automatically approve new user registrations",
-          },
-          true,
-        )
-
-        updateToggleUI(e.target.checked)
-        showNotification(`Auto User Approval ${e.target.checked ? "enabled" : "disabled"}`, "success")
-      } catch (error) {
-        showNotification(`Failed to update setting: ${error.message}`, "error")
-        e.target.checked = !e.target.checked
-        updateToggleUI(e.target.checked)
-      }
-    })
-
-    // Setup search functionality
-    setupUserSearch()
-  }
-
-  // --- Survey Management ---
-  async function renderSurveyManagement() {
-    const surveyTableBody = document.getElementById("survey-management-table-body")
-    if (!surveyTableBody) return
-
-    surveyTableBody.innerHTML = ""
-
-    try {
-      const surveys = await fetchApi("/admin/surveys", "GET", null, true)
-
-      if (surveys.length === 0) {
-        const row = surveyTableBody.insertRow()
-        row.innerHTML = `<td colspan="5" class="table-cell text-center text-gray-500">No surveys available.</td>`
-        return
-      }
-
-      surveys.forEach((survey) => {
-        const row = surveyTableBody.insertRow()
-        row.className = "table-row"
-        row.innerHTML = `
-                    <td class="table-cell">
-                        <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">#${survey.id}</span>
-                    </td>
-                    <td class="table-cell font-medium">${survey.title}</td>
-                    <td class="table-cell">
-                        <span class="font-semibold text-green-600">${survey.points_reward}</span>
-                    </td>
-                    <td class="table-cell">
-                        <span class="status-badge ${survey.is_active ? "status-active" : "status-inactive"}">
-                            ${survey.is_active ? "Active" : "Inactive"}
-                        </span>
-                    </td>
-                    <td class="table-cell">
-                        <span class="font-semibold text-primary-600">${survey.completions || 0}</span>
-                    </td>
-                `
-      })
-    } catch (error) {
-      console.error("Failed to fetch survey data:", error)
-      showNotification("Failed to load survey data", "error")
-    }
-  }
-
-  // --- Point Transfers ---
-  async function renderPointTransfers() {
-    setupPointTransferForm()
-    await loadPointTransferHistory()
-  }
-
-  function setupPointTransferForm() {
-    const form = document.getElementById("send-points-form")
-    if (!form) return
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault()
-
-      const fromEmail = document.getElementById("from-user-email").value
-      const toEmail = document.getElementById("to-user-email").value
-      const amount = Number.parseInt(document.getElementById("points-amount").value)
-
-      if (!toEmail || !amount) {
-        showNotification("Please fill in all required fields", "error")
-        return
-      }
-
-      try {
-        await fetchApi(
-          "/admin/transfer-points",
-          "POST",
-          {
-            from_user_email: fromEmail || null,
-            to_user_email: toEmail,
-            points: amount,
-          },
-          true,
-        )
-
-        showNotification("Points transferred successfully", "success")
-        form.reset()
-        await loadPointTransferHistory()
-      } catch (error) {
-        showNotification(`Failed to transfer points: ${error.message}`, "error")
-      }
-    })
-  }
-
-  async function loadPointTransferHistory() {
-    const tableBody = document.getElementById("point-transfers-table-body")
-    if (!tableBody) return
-
-    tableBody.innerHTML = ""
-
-    try {
-      const transfers = await fetchApi("/admin/point-transfers", "GET", null, true)
-
-      if (transfers.length === 0) {
-        const row = tableBody.insertRow()
-        row.innerHTML = `<td colspan="5" class="table-cell text-center text-gray-500">No point transfers found.</td>`
-        return
-      }
-
-      transfers.forEach((transfer) => {
-        const row = tableBody.insertRow()
-        row.className = "table-row"
-        row.innerHTML = `
-                    <td class="table-cell">${transfer.from_user || "System"}</td>
-                    <td class="table-cell">${transfer.to_user}</td>
-                    <td class="table-cell">
-                        <span class="font-semibold text-green-600">${transfer.amount}</span>
-                    </td>
-                    <td class="table-cell">${new Date(transfer.created_at).toLocaleString()}</td>
-                    <td class="table-cell">
-                        <button class="btn-secondary text-xs px-2 py-1" onclick="viewTransferDetails(${transfer.id})">
-                            View
-                        </button>
-                    </td>
-                `
-      })
-    } catch (error) {
-      console.error("Failed to fetch point transfers:", error)
-      showNotification("Failed to load point transfer history", "error")
-    }
-  }
-
-  // --- Redemption Requests ---
-  async function renderRedemptionRequests() {
-    const tableBody = document.getElementById("redemption-requests-table-body")
-    if (!tableBody) return
-
-    tableBody.innerHTML = ""
-
-    try {
-      const redemptions = await fetchApi("/admin/redemption-requests", "GET", null, true)
-
-      if (redemptions.length === 0) {
-        const row = tableBody.insertRow()
-        row.innerHTML = `<td colspan="7" class="table-cell text-center text-gray-500">No redemption requests found.</td>`
-        return
-      }
-
-      redemptions.forEach((redemption) => {
-        const row = tableBody.insertRow()
-        row.className = "table-row"
-        row.innerHTML = `
-                    <td class="table-cell">
-                        <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">#${redemption.user_id}</span>
-                    </td>
-                    <td class="table-cell">${redemption.user_email}</td>
-                    <td class="table-cell">
-                        <span class="font-semibold text-red-600">${redemption.points}</span>
-                    </td>
-                    <td class="table-cell">${redemption.type}</td>
-                    <td class="table-cell">${redemption.destination}</td>
-                    <td class="table-cell">
-                        <span class="status-badge ${getStatusClass(redemption.status)}">
-                            ${redemption.status.charAt(0).toUpperCase() + redemption.status.slice(1)}
-                        </span>
-                    </td>
-                    <td class="table-cell">
-                        <div class="flex space-x-2">
-                            ${
-                              redemption.status === "pending"
-                                ? `
-                                <button class="btn-success text-xs px-2 py-1" onclick="approveRedemption(${redemption.id})">
-                                    Approve
-                                </button>
-                                <button class="btn-danger text-xs px-2 py-1" onclick="rejectRedemption(${redemption.id})">
-                                    Reject
-                                </button>
-                            `
-                                : `
-                                <button class="btn-secondary text-xs px-2 py-1" onclick="viewRedemptionDetails(${redemption.id})">
-                                    View
-                                </button>
-                            `
-                            }
-                        </div>
-                    </td>
-                `
-      })
-    } catch (error) {
-      console.error("Failed to fetch redemption requests:", error)
-      showNotification("Failed to load redemption requests", "error")
-    }
-  }
-
-  // --- Fraud Management ---
-  async function renderFraudManagement() {
-    const tableBody = document.getElementById("fraud-flags-table-body")
-    if (!tableBody) return
-
-    tableBody.innerHTML = ""
-
-    try {
-      const fraudFlags = await fetchApi("/admin/fraud-flags", "GET", null, true)
-
-      if (fraudFlags.length === 0) {
-        const row = tableBody.insertRow()
-        row.innerHTML = `<td colspan="5" class="table-cell text-center text-gray-500">No fraud flags found.</td>`
-        return
-      }
-
-      fraudFlags.forEach((flag) => {
-        const row = tableBody.insertRow()
-        row.className = "table-row"
-        row.innerHTML = `
-                    <td class="table-cell">
-                        <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">#${flag.user_id}</span>
-                    </td>
-                    <td class="table-cell">${flag.user_email}</td>
-                    <td class="table-cell">
-                        <span class="status-badge status-inactive">${flag.reason}</span>
-                    </td>
-                    <td class="table-cell">${new Date(flag.created_at).toLocaleString()}</td>
-                    <td class="table-cell">
-                        <div class="flex space-x-2">
-                            <button class="btn-success text-xs px-2 py-1" onclick="clearFraudFlag(${flag.id})">
-                                Clear
-                            </button>
-                            <button class="btn-secondary text-xs px-2 py-1" onclick="viewFraudDetails(${flag.id})">
-                                Details
-                            </button>
-                        </div>
-                    </td>
-                `
-      })
-    } catch (error) {
-      console.error("Failed to fetch fraud flags:", error)
-      showNotification("Failed to load fraud flags", "error")
-    }
-  }
-
-  async function renderFraudRules() {
-    const tableBody = document.getElementById("fraud-rules-table-body")
-    if (!tableBody) return
-
-    tableBody.innerHTML = ""
-
-    try {
-      const settings = await fetchApi("/admin/settings", "GET", null, true)
-      const fraudRules = settings.filter((setting) =>
-        [
-          "max_devices_per_user",
-          "max_users_per_fingerprint",
-          "max_ips_per_user_24h",
-          "max_signups_per_fingerprint_24h",
-        ].includes(setting.key),
-      )
-
-      fraudRules.forEach((rule) => {
-        const row = tableBody.insertRow()
-        row.className = "table-row"
-        row.innerHTML = `
-                    <td class="table-cell font-medium">${rule.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
-                    <td class="table-cell text-sm text-gray-600">${rule.description || "No description"}</td>
-                    <td class="table-cell">
-                        <input type="number" value="${rule.value}" class="input-field w-20" id="${rule.key}-input">
-                    </td>
-                    <td class="table-cell">
-                        <button class="btn-primary text-xs px-2 py-1" onclick="updateFraudRule('${rule.key}')">
-                            Update
-                        </button>
-                    </td>
-                `
-      })
-    } catch (error) {
-      console.error("Failed to fetch fraud rules:", error)
-      showNotification("Failed to load fraud rules", "error")
+      alert(`Failed to load activity logs: ${error.message}`)
     }
   }
 
   // --- System Settings ---
   async function renderSystemSettings() {
-    const tableBody = document.getElementById("system-settings-table-body")
-    if (!tableBody) return
+    const systemSettingsTableBody = document.getElementById("system-settings-table-body");
+    if (!systemSettingsTableBody) return;
 
-    tableBody.innerHTML = ""
+    systemSettingsTableBody.innerHTML = "";
 
     try {
-      const settings = await fetchApi("/admin/settings", "GET", null, true)
-
-      // Filter out fraud rules as they're handled in fraud management
-      const systemSettings = settings.filter(
-        (setting) =>
-          ![
-            "max_devices_per_user",
-            "max_users_per_fingerprint",
-            "max_ips_per_user_24h",
-            "max_signups_per_fingerprint_24h",
-          ].includes(setting.key),
-      )
+      const systemSettings = await fetchApi("/admin/settings", "GET", null, true);
 
       systemSettings.forEach((setting) => {
-        const isToggle = setting.key === "auto_user_approval"
-        const isChecked = setting.value === "true"
+        // Skip rendering fraud rules in System Settings, as they are managed under Fraud Management
+        const fraudRuleKeys = [
+          "max_devices_per_user",
+          "max_users_per_fingerprint",
+          "max_ips_per_user_24h",
+          "max_signups_per_fingerprint_24h",
+        ];
+        if (fraudRuleKeys.includes(setting.key)) {
+          return; // Skip this iteration
+        }
 
-        const row = tableBody.insertRow()
-        row.className = "table-row"
+        const isToggle = setting.key === "auto_user_approval"; // Use specific key for toggle
+        const isChecked = setting.value === "true";
+
+        const row = document.createElement("tr");
+        row.setAttribute("data-key", setting.key);
+
         row.innerHTML = `
-                    <td class="table-cell">
-                        <div class="font-medium">${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</div>
-                        ${setting.description ? `<div class="text-xs text-gray-500 mt-1">${setting.description}</div>` : ""}
-                    </td>
-                    <td class="table-cell">
-                        ${
-                          isToggle
-                            ? `
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" id="${setting.key}-toggle" ${isChecked ? "checked" : ""} />
-                                <div class="toggle-switch ${isChecked ? "checked" : ""}">
-                                    <div class="toggle-dot ${isChecked ? "checked" : ""}"></div>
-                                </div>
-                                <span class="ml-3 text-sm font-medium text-gray-700">${isChecked ? "ON" : "OFF"}</span>
-                            </label>
-                        `
-                            : `
-                            <input type="text" value="${setting.value}" class="input-field" id="${setting.key}-input">
-                        `
-                        }
-                    </td>
-                    <td class="table-cell">
-                        <button class="btn-primary text-xs px-2 py-1" onclick="updateSetting('${setting.key}', ${isToggle})">
-                            Save
-                        </button>
-                    </td>
-                `
+          <td class="px-4 py-2 font-medium text-gray-800">
+            ${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+            ${setting.description ? `<p class="text-xs text-gray-500 mt-1">${setting.description}</p>` : ''}
+          </td>
+          <td class="px-4 py-2">
+            ${
+              isToggle
+                ? `
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" class="sr-only peer setting-toggle" id="${setting.key}-toggle" ${isChecked ? "checked" : ""} />
+                <div class="toggle-bg ${isChecked ? 'checked' : ''}">
+                  <div class="toggle-dot ${isChecked ? 'checked' : ''}"></div>
+                </div>
+              </label>
+              <span class="ml-3 text-sm font-semibold text-gray-700" id="${setting.key}-status">${
+                    isChecked ? "ON" : "OFF"
+                  }</span>
+            `
+                : `<input type="text" value="${setting.value}" class="input-field" id="${setting.key}-input">`
+            }
+          </td>
+          <td class="px-4 py-2">
+            <button class="btn btn-primary save-setting-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md" data-setting="${setting.key}">Save</button>
+          </td>
+        `;
+
+        systemSettingsTableBody.appendChild(row);
+
+        // Toggle logic
+        if (isToggle) {
+          const input = row.querySelector(`#${setting.key}-toggle`);
+          const toggleBg = row.querySelector('.toggle-bg');
+          const toggleDot = row.querySelector('.toggle-dot');
+          const status = row.querySelector(`#${setting.key}-status`);
+
+          input.addEventListener("change", () => {
+            const checked = input.checked;
+            if (checked) {
+              toggleBg.classList.add('checked');
+              toggleDot.classList.add('checked');
+            } else {
+              toggleBg.classList.remove('checked');
+              toggleDot.classList.remove('checked');
+            }
+            status.textContent = checked ? "ON" : "OFF";
+          });
+        }
+
+        // Save logic
+        const saveBtn = row.querySelector(".save-setting-btn");
+        saveBtn.addEventListener("click", async () => {
+          let value;
+          if (isToggle) {
+            const input = row.querySelector(`#${setting.key}-toggle`);
+            value = input.checked.toString();
+          } else {
+            const input = row.querySelector(`#${setting.key}-input`);
+            value = input.value.trim();
+          }
+
+          try {
+            // Use the description from the fetched setting or default to empty string
+            const descriptionToSend = setting.description || "";
+            await fetchApi("/admin/settings", "PUT", { key: setting.key, value, description: descriptionToSend }, true);
+            console.log(`Setting "${setting.key}" updated successfully.`); // Changed from alert
+          } catch (err) {
+            console.error("Error updating setting:", err);
+            alert(`Failed to update "${setting.key}".`);
+          }
+        });
+      });
+    } catch (err) {
+      console.error("Failed to load system settings:", err);
+      alert("Could not load system settings.");
+    }
+  }
+
+  function initializeSearch() {
+    const userSearchInput = document.getElementById('user-search')
+    const agentSearchInput = document.getElementById('agent-search')
+
+    if (userSearchInput) {
+      userSearchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase()
+        filteredUsers = users.filter(user => 
+          user.email.toLowerCase().includes(searchTerm) ||
+          user.id.toString().includes(searchTerm) ||
+          (user.first_name && user.first_name.toLowerCase().includes(searchTerm)) ||
+          (user.last_name && user.last_name.toLowerCase().includes(searchTerm))
+        )
+        renderUserManagement()
       })
-    } catch (error) {
-      console.error("Failed to fetch system settings:", error)
-      showNotification("Failed to load system settings", "error")
+    }
+
+    if (agentSearchInput) {
+      agentSearchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase()
+        filteredAgents = agents.filter(agent => 
+          agent.email.toLowerCase().includes(searchTerm) ||
+          agent.id.toString().includes(searchTerm) ||
+          (agent.first_name && agent.first_name.toLowerCase().includes(searchTerm)) ||
+          (agent.last_name && agent.last_name.toLowerCase().includes(searchTerm)) ||
+          (agent.referral_code && agent.referral_code.toLowerCase().includes(searchTerm))
+        )
+        renderAgentManagement()
+      })
     }
   }
 
-  // --- Utility Functions ---
-  function getStatusClass(status) {
-    switch (status?.toLowerCase()) {
-      case "active":
-      case "approved":
-        return "status-active"
-      case "pending":
-        return "status-pending"
-      case "inactive":
-      case "rejected":
-      case "suspended":
-        return "status-inactive"
-      default:
-        return "status-pending"
-    }
-  }
+  function renderUserManagement() {
+    if (!userManagementTableBody) return
 
-  function showNotification(message, type = "info") {
-    // Create notification element
-    const notification = document.createElement("div")
-    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`
+    const usersToRender = filteredUsers.length > 0 || document.getElementById('user-search')?.value ? filteredUsers : users
 
-    // Set notification style based on type
-    switch (type) {
-      case "success":
-        notification.classList.add("bg-green-500", "text-white")
-        break
-      case "error":
-        notification.classList.add("bg-red-500", "text-white")
-        break
-      case "warning":
-        notification.classList.add("bg-yellow-500", "text-white")
-        break
-      default:
-        notification.classList.add("bg-blue-500", "text-white")
-    }
-
-    notification.innerHTML = `
-            <div class="flex items-center">
-                <span>${message}</span>
-                <button class="ml-4 text-white hover:text-gray-200" onclick="this.parentElement.parentElement.remove()">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
+    userManagementTableBody.innerHTML = usersToRender
+      .map(
+        (user) => `
+        <tr class="border-b border-gray-200 hover:bg-gray-50">
+          <td class="px-4 py-3">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                ${(user.first_name?.[0] || user.email[0]).toUpperCase()}
+              </div>
+              <div>
+                <div class="font-medium text-gray-900">${user.first_name || ''} ${user.last_name || ''}</div>
+                <div class="text-sm text-gray-500">ID: ${user.id}</div>
+                <div class="text-sm text-gray-500">${user.email}</div>
+                <div class="text-xs text-gray-400">Joined: ${new Date(user.created_at).toLocaleDateString()} ${new Date(user.created_at).toLocaleTimeString()}</div>
+              </div>
             </div>
-        `
+          </td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              user.is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+            }">
+              ${user.is_verified ? 'Verified' : 'Pending'}
+            </span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="font-medium text-gray-900">${user.points_balance || 0}</span>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center space-x-2">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" ${user.is_verified ? 'checked' : ''} 
+                       onchange="toggleUserVerification(${user.id}, this.checked)" 
+                       class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+              <button onclick="deleteUser(${user.id})" 
+                      class="text-red-600 hover:text-red-800 text-sm font-medium">
+                Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      `
+      )
+      .join("")
+  }
 
-    document.body.appendChild(notification)
+  function renderAgentManagement() {
+    if (!agentManagementTableBody) return
 
-    // Animate in
-    setTimeout(() => {
-      notification.classList.remove("translate-x-full")
-    }, 100)
+    const agentsToRender = filteredAgents.length > 0 || document.getElementById('agent-search')?.value ? filteredAgents : agents
 
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-      notification.classList.add("translate-x-full")
-      setTimeout(() => {
-        if (notification.parentElement) {
-          notification.remove()
+    agentManagementTableBody.innerHTML = agentsToRender
+      .map(
+        (agent) => `
+        <tr class="border-b border-gray-200 hover:bg-gray-50">
+          <td class="px-4 py-3">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                ${(agent.first_name?.[0] || agent.email[0]).toUpperCase()}
+              </div>
+              <div>
+                <div class="font-medium text-gray-900">${agent.first_name || ''} ${agent.last_name || ''}</div>
+                <div class="text-sm text-gray-500">ID: ${agent.id}</div>
+                <div class="text-sm text-gray-500">${agent.email}</div>
+                <div class="text-xs text-gray-400">Appointed: ${new Date(agent.created_at).toLocaleDateString()} ${new Date(agent.created_at).toLocaleTimeString()}</div>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              ${agent.referral_code || 'N/A'}
+            </span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="font-medium text-gray-900">${agent.points_balance || 0}</span>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center space-x-2">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" ${agent.is_agent ? 'checked' : ''} 
+                       onchange="toggleAgentStatus(${agent.id}, this.checked)" 
+                       class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+              </label>
+              <button onclick="deleteAgent(${agent.id})" 
+                      class="text-red-600 hover:text-red-800 text-sm font-medium">
+                Remove
+              </button>
+            </div>
+          </td>
+        </tr>
+      `
+      )
+      .join("")
+  }
+                alert(`Failed to bulk approve users: ${error.message}`)
+            }
+\
+          } else
+{
+  alert("No pending users to approve.")
+}
+\
+        })
+      }
+
+if (rejectAllPendingUsersBtn) {
+  rejectAllPendingUsersBtn.addEventListener("click", async () => {
+    const pendingUserIds = users.filter((user) => user.status === "pending").map((user) => user.id)
+    if (pendingUserIds.length > 0) {
+      if (
+        confirm(
+          `Are you sure you want to reject and delete ${pendingUserIds.length} pending users? This action is irreversible.`,
+        )
+      ) {
+        try {
+          await fetchApi("/admin/users/bulk-status", "PUT", { user_ids: pendingUserIds, status: "rejected" }, true)
+          console.log("All pending users rejected and deleted!") // Changed from alert
+          renderUserManagement()
+          renderDashboardOverview()
+        } catch (error) {
+          alert(`Failed to bulk reject users: ${error.message}`)
         }
-      }, 300)
-    }, 5000)
+      }
+    } else {
+      alert("No pending users to reject.")
+    }
+  })
+}
+
+// Call the new setup function after elements are rendered
+setupUserManagementListeners()
+\
+    } catch (error)
+{
+  console.error("Failed to fetch users:", error)
+  alert(`Failed to load user data: ${error.message}`)
+}
+\
   }
 
-  // --- Global Action Functions ---
-  window.approveUser = async (userId) => {
-    try {
-      await fetchApi(`/admin/users/${userId}/approve`, "POST", null, true)
-      showNotification("User approved successfully", "success")
-      await renderUserManagement()
-    } catch (error) {
-      showNotification(`Failed to approve user: ${error.message}`, "error")
+  // Add this new function:
+  async
+function setupUserManagementListeners() {
+  const toggle = document.getElementById("auto-user-approval-toggle")
+  const toggleBg = toggle.nextElementSibling // The div with class toggle-bg
+  const toggleDot = toggleBg.firstElementChild // The div with class toggle-dot
+  const label = document.getElementById("approvalStatusLabel")
+
+  if (!toggle) return
+
+  function updateLabelUI(checked) {
+    if (!label) return
+
+    if (checked) {
+      label.textContent = "Auto-Approval is ON"
+      label.classList.remove("text-gray-500")
+      label.classList.add("text-green-600", "font-semibold")
+    } else {
+      label.textContent = "Auto-Approval is OFF"
+      label.classList.remove("text-green-600")
+      label.classList.add("text-gray-500")
     }
   }
 
-  window.rejectUser = async (userId) => {
-    try {
-      await fetchApi(`/admin/users/${userId}/reject`, "POST", null, true)
-      showNotification("User rejected successfully", "success")
-      await renderUserManagement()
-    } catch (error) {
-      showNotification(`Failed to reject user: ${error.message}`, "error")
-    }
-  }
+  // Load current setting
+  try {
+    const res = await fetchApi("/admin/settings", "GET", null, true)
+    const setting = res.find((s) => s.key === "auto_user_approval")
 
-  window.viewUserDetails = (userId) => {
-    const user = users.find((u) => u.id === userId)
-    if (user) {
-      alert(
-        `User Details:\nID: ${user.id}\nName: ${user.name || "N/A"}\nEmail: ${user.email}\nStatus: ${user.status}\nPoints: ${user.points || 0}`,
-      )
-    }
-  }
-
-  window.viewAgentDetails = (agentId) => {
-    const agent = agents.find((a) => a.id === agentId)
-    if (agent) {
-      alert(
-        `Agent Details:\nID: ${agent.id}\nName: ${agent.name || "N/A"}\nEmail: ${agent.email}\nReferral Code: ${agent.referral_code || "N/A"}\nReferred Users: ${agent.referred_users || 0}`,
-      )
-    }
-  }
-
-  window.updateSetting = async (key, isToggle) => {
-    try {
-      let value
-      if (isToggle) {
-        const input = document.getElementById(`${key}-toggle`)
-        value = input.checked.toString()
+    if (setting) {
+      const isOn = setting.value === "true"
+      toggle.checked = isOn
+      if (isOn) {
+        toggleBg.classList.add("checked")
+        toggleDot.classList.add("checked")
       } else {
-        const input = document.getElementById(`${key}-input`)
-        value = input.value.trim()
+        toggleBg.classList.remove("checked")
+        toggleDot.classList.remove("checked")
       }
-
-      await fetchApi(
-        "/admin/settings",
-        "PUT",
-        {
-          key: key,
-          value: value,
-          description: `Updated ${key.replace(/_/g, " ")}`,
-        },
-        true,
-      )
-
-      showNotification("Setting updated successfully", "success")
-    } catch (error) {
-      showNotification(`Failed to update setting: ${error.message}`, "error")
+      updateLabelUI(isOn)
     }
+  } catch (error) {
+    console.error("Failed to load auto approval setting:", error)
   }
 
-  window.updateFraudRule = async (key) => {
-    const input = document.getElementById(`${key}-input`)
-    const value = input.value.trim()
+  // Listen for toggle changes
+  toggle.addEventListener("change", async (e) => {
+    const newValue = e.target.checked.toString()
+    const checked = e.target.checked
+
+    if (checked) {
+      toggleBg.classList.add("checked")
+      toggleDot.classList.add("checked")
+    } else {
+      toggleBg.classList.remove("checked")
+      toggleDot.classList.remove("checked")
+    }
 
     try {
       await fetchApi(
         "/admin/settings",
         "PUT",
         {
-          key: key,
-          value: value,
-          description: `Fraud rule: ${key.replace(/_/g, " ")}`,
+          key: "auto_user_approval",
+          value: newValue,
+          description: "Automatically approve new user registrations", // Keep description for consistency
         },
         true,
       )
 
-      showNotification("Fraud rule updated successfully", "success")
+      updateLabelUI(e.target.checked)
+      console.log(`Auto User Approval set to: ${newValue}`) // Changed from alert
     } catch (error) {
-      showNotification(`Failed to update fraud rule: ${error.message}`, "error")
-    }
-  }
-
-  // --- Logout Functionality ---
-  function setupLogout() {
-    const logoutButton = document.getElementById("logout-button")
-    if (logoutButton) {
-      logoutButton.addEventListener("click", () => {
-        if (confirm("Are you sure you want to logout?")) {
-          clearSession()
-          window.location.href = "/"
-        }
-      })
-    }
-  }
-
-  // --- Page Refresh Handling ---
-  function handlePageRefresh() {
-    // Restore active section after refresh
-    const savedSection = sessionStorage.getItem("activeSection")
-    if (savedSection && document.getElementById(savedSection)) {
-      currentSection = savedSection
-
-      // Update navigation
-      const navLinks = document.querySelectorAll(".nav-link")
-      navLinks.forEach((link) => {
-        link.classList.remove("bg-gray-800")
-        if (link.id === savedSection.replace("-section", "-link")) {
-          link.classList.add("bg-gray-800")
-        }
-      })
-
-      // Show section
-      const sections = document.querySelectorAll(".section-content")
-      sections.forEach((section) => section.classList.remove("active"))
-      document.getElementById(savedSection).classList.add("active")
-
-      // Update title
-      const pageTitle = document.getElementById("page-title")
-      const activeLink = document.querySelector(".nav-link.bg-gray-800")
-      if (pageTitle && activeLink) {
-        pageTitle.textContent = activeLink.querySelector(".sidebar-text").textContent
+      alert(`Failed to update setting: ${error.message}`)
+      e.target.checked = !e.target.checked // Revert toggle state on error
+      if (e.target.checked) {
+        // Revert visual state
+        toggleBg.classList.add("checked")
+        toggleDot.classList.add("checked")
+      } else {
+        toggleBg.classList.remove("checked")
+        toggleDot.classList.remove("checked")
       }
+      updateLabelUI(e.target.checked)
+    }
+  })
+}
 
-      // Load content
-      renderSectionContent(savedSection)
+async function updateUserStatus(userId, newStatus) {
+  try {
+    if (
+      newStatus === "rejected" &&
+      !confirm("Are you sure you want to reject and permanently delete this user? This action is irreversible.")
+    ) {
+      return // Stop if user cancels
+    }
+    await fetchApi(`/admin/users/${userId}/status`, "PUT", { status: newStatus }, true)
+    console.log(`User status updated to ${newStatus}.`) // Changed from alert
+    renderUserManagement() // Re-render table
+    renderDashboardOverview()
+  } catch (error) {
+    alert(`Failed to update user status: ${error.message}`)
+  }
+}
+
+async function promoteUserToAgent(userId, isAgent) {
+  try {
+    const data = await fetchApi(
+      `/admin/users/${userId}/agent`,
+      "PUT",
+      { user_id: Number.parseInt(userId), is_agent: isAgent },
+      true,
+    )
+    console.log(`Agent role ${isAgent ? "assigned" : "removed"}. Referral code: ${data.referral_code || "N/A"}`) // Changed from alert
+    renderUserManagement() // Re-render user table
+    renderAgentManagement() // Re-render agent table
+  } catch (error) {
+    alert(`Failed to update agent role: ${error.message}`)
+  }
+}
+
+// --- Agent Management ---
+// async function renderAgentManagement() {
+//   if (!agentManagementTableBody) return
+//   agentManagementTableBody.innerHTML = ""
+//   try {
+//     const allUsers = await fetchApi("/admin/users", "GET", null, true)
+//     agents = allUsers.filter((user) => user.is_agent) // Filter agents from all users
+
+//     if (agents.length === 0) {
+//       const row = agentManagementTableBody.insertRow()
+//       row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No agents found.</td>`
+//       return;
+//     }
+
+//     agents.forEach((agent) => {
+//       const row = agentManagementTableBody.insertRow()
+//       row.innerHTML = `
+//             <td class="table-row-data font-medium text-gray-900">${agent.name}</td>
+//             <td class="table-row-data">${agent.referral_code || "N/A"}</td>
+//             <td class="table-row-data">${agent.referred_users_count || 0}</td>
+//             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+//                 <button id="demote-agent-${agent.id}" class="action-btn demote-agent-btn text-red-600 hover:text-red-900">Demote Agent</button>
+//             </td>
+//         `
+//     })
+
+//     document.querySelectorAll(".demote-agent-btn").forEach((button) => {
+//       button.addEventListener("click", (e) => {
+//         const agentId = e.target.id.replace("demote-agent-", "")
+//         promoteUserToAgent(agentId, false) // Use the same promote/demote function
+//       })
+//     })
+//   } catch (error) {
+//     console.error("Failed to fetch agents:", error)
+//     alert(`Failed to load agent data: ${error.message}`)
+//   }
+// }
+
+// --- Survey Management ---
+async function renderSurveyManagement() {
+  const surveyManagementTableBody = document.getElementById("survey-management-table-body") // Corrected ID
+  if (!surveyManagementTableBody) return
+
+  surveyManagementTableBody.innerHTML = `
+      <tr>
+        <td colspan="3" class="px-6 py-4 text-center text-lg text-gray-600">
+          Survey Management is temporarily closed for maintenance. Please check back later.
+        </td>
+      </tr>
+    `
+  // No API calls or further rendering logic here, as it's temporarily closed.
+}
+
+// --- Point Transfers ---
+let currentPage = 1
+const pageSize = 5
+let fullTransferList = []
+
+// Exposed globally for onclick in HTML
+window.renderPointTransfers = async () => {
+  const tbody = document.getElementById("pointTransfersTableBody")
+  const startDateInput = document.getElementById("filterStartDate")
+  const endDateInput = document.getElementById("filterEndDate")
+  const searchEmailInput = document.getElementById("searchEmail")
+
+  const startDate = startDateInput.value
+  const endDate = endDateInput.value
+  const searchEmail = searchEmailInput.value.toLowerCase()
+
+  tbody.innerHTML = ""
+
+  try {
+    let endpoint = `/admin/point-transfers?skip=0&limit=1000` // Fetch all to filter client-side
+    if (startDate) endpoint += `&date=${startDate}` // Backend can filter by day
+    if (searchEmail) endpoint += `&email=${searchEmail}` // Backend can filter by email
+
+    // Fetch all transfers from backend first, then apply client-side date range if necessary
+    const transfers = await fetchApi(endpoint, "GET", null, true)
+
+    fullTransferList = transfers.filter((t) => {
+      const createdAt = new Date(t.created_at)
+      const fromEmail = t.from_user?.email?.toLowerCase() || ""
+      const toEmail = t.to_user?.email?.toLowerCase() || ""
+
+      const matchEmail = !searchEmail || fromEmail.includes(searchEmail) || toEmail.includes(searchEmail)
+
+      // Adjust date filtering for full range if backend only filters by day
+      const filterStartDateObj = startDate ? new Date(startDate + "T00:00:00") : null
+      const filterEndDateObj = endDate ? new Date(endDate + "T23:59:59") : null
+
+      const matchDate =
+        (!filterStartDateObj || createdAt >= filterStartDateObj) && (!filterEndDateObj || createdAt <= filterEndDateObj)
+
+      return matchEmail && matchDate
+    })
+
+    currentPage = 1 // Reset to first page after new filter
+    const start = (currentPage - 1) * pageSize
+    const paginatedTransfers = fullTransferList.slice(start, start + pageSize)
+
+    // Render table
+    if (paginatedTransfers.length === 0) {
+      const row = tbody.insertRow()
+      row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No point transfers found.</td>`
+    } else {
+      paginatedTransfers.forEach((t) => {
+        const row = tbody.insertRow()
+        row.innerHTML = `
+            <td class="table-row-data font-medium text-gray-900">${t.from_user?.email || "N/A"}</td>
+            <td class="table-row-data">${t.to_user?.email || "N/A"}</td>
+            <td class="table-row-data">${t.amount}</td>
+            <td class="table-row-data">${new Date(t.created_at).toLocaleString()}</td>
+            <td class="px-6 py-4 text-right text-sm font-medium"></td>
+          `
+      })
     }
 
-    // Save active section on navigation
-    const navLinks = document.querySelectorAll(".nav-link")
-    navLinks.forEach((link) => {
-      link.addEventListener("click", () => {
-        const sectionId = link.id.replace("-link", "-section")
-        sessionStorage.setItem("activeSection", sectionId)
+    updatePaginationDisplay()
+  } catch (err) {
+    console.error("Failed to fetch transfers:", err)
+    alert("Error loading transfers.")
+  }
+}
+
+function updatePaginationDisplay() {
+  const total = fullTransferList.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const info = document.getElementById("paginationInfo")
+  info.textContent = `Page ${currentPage} of ${totalPages}`
+
+  const prevBtn = document.querySelector('button[onclick="window.prevPage()"]')
+  const nextBtn = document.querySelector('button[onclick="window.nextPage()"]')
+
+  if (prevBtn) prevBtn.disabled = currentPage === 1
+  if (nextBtn) nextBtn.disabled = currentPage === totalPages
+}
+
+// Exposed globally for onclick in HTML
+window.nextPage = () => {
+  const totalPages = Math.ceil(fullTransferList.length / pageSize)
+  if (currentPage < totalPages) {
+    currentPage++
+    window.renderPointTransfers()
+  }
+}
+
+// Exposed globally for onclick in HTML
+window.prevPage = () => {
+  if (currentPage > 1) {
+    currentPage--
+    window.renderPointTransfers()
+  }
+}
+
+// --- Redemption Requests ---
+
+async function renderRedemptionRequests() {
+  if (!redemptionRequestsTableBody) return
+  redemptionRequestsTableBody.innerHTML = ""
+
+  try {
+    const redemptionRequests = await fetchApi("/admin/redemptions", "GET", null, true) // Admin endpoint
+
+    if (redemptionRequests.length === 0) {
+      const row = redemptionRequestsTableBody.insertRow()
+      row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No redemption requests found.</td>`
+      return
+    }
+
+    // Sort so pending requests are on top
+    redemptionRequests.sort((a, b) => {
+      if (a.status === "pending" && b.status !== "pending") return -1
+      if (a.status !== "pending" && b.status === "pending") return 1
+      return 0
+    })
+
+    redemptionRequests.forEach((request) => {
+      // Determine destination based on type
+      const destination = request.destination || ""
+
+      const row = redemptionRequestsTableBody.insertRow()
+      row.innerHTML = `
+          <td class="table-row-data font-medium text-gray-900">${request.user_email || request.user_id}</td>
+          <td class="table-row-data">${request.points_amount}</td>
+          <td class="table-row-data">${request.type}</td>
+          <td class="table-row-data">${destination}</td>
+          <td class="table-row-data capitalize">${request.status}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            ${
+              request.status === "pending"
+                ? `<button id="approve-redemption-${request.id}" class="action-btn approve-redemption-btn text-green-600 hover:text-green-900 mr-2">Approve</button>`
+                : ""
+            }
+            ${
+              request.status === "pending"
+                ? `<button id="reject-redemption-${request.id}" class="action-btn reject-redemption-btn text-red-600 hover:text-red-900">Reject</button>`
+                : ""
+            }
+          </td>
+        `
+    })
+
+    // Attach event listeners for approve/reject buttons
+    document.querySelectorAll(".approve-redemption-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const requestId = e.target.id.replace("approve-redemption-", "")
+        updateRedemptionStatus(requestId, "approve") // Backend expects 'approve' or 'reject'
       })
     })
+
+    document.querySelectorAll(".reject-redemption-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const requestId = e.target.id.replace("reject-redemption-", "")
+        updateRedemptionStatus(requestId, "reject") // Backend expects 'approve' or 'reject'
+      })
+    })
+  } catch (error) {
+    console.error("Failed to fetch redemption requests:", error)
+    alert(`Failed to load redemption requests: ${error.message}`)
   }
+}
 
-  // --- Initialization ---
-  function initialize() {
-    protectRoute()
-    initializeMobileMenu()
-    initializeNavigation()
-    setupLogout()
-    handlePageRefresh()
-
-    // Load initial content
-    renderSectionContent(currentSection)
+async function updateRedemptionStatus(requestId, action) {
+  try {
+    await fetchApi(`/admin/redemptions/${requestId}/process?action=${action}`, "PUT", null, true)
+    console.log(`Redemption request ${requestId} status updated to ${action}.`) // Changed from alert
+    renderRedemptionRequests()
+    renderDashboardOverview()
+  } catch (error) {
+    alert(`Failed to update redemption status: ${error.message}`)
   }
+}
 
-  // --- Start the application ---
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initialize)
-  } else {
-    initialize()
+// --- Table Sorting Logic ---
+function setupTableSorting() {
+  document.querySelectorAll(".sortable-header").forEach((header) => {
+    header.addEventListener("click", () => {
+      const table = header.closest("table")
+      const tbody = table.querySelector("tbody")
+      const rows = Array.from(tbody.querySelectorAll("tr"))
+      const sortBy = header.dataset.sortBy
+      const isAsc = header.classList.contains("asc")
+
+      table.querySelectorAll(".sortable-header").forEach((h) => {
+        h.classList.remove("asc", "desc")
+      })
+
+      const newIsAsc = !isAsc
+      header.classList.add(newIsAsc ? "asc" : "desc")
+
+      rows.sort((a, b) => {
+        const aText = a
+          .querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`)
+          .textContent.trim()
+        const bText = b
+          .querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`)
+          .textContent.trim()
+
+        let valA = aText
+        let valB = bText
+
+        if (
+          !isNaN(Number.parseFloat(aText)) &&
+          isFinite(aText) &&
+          !isNaN(Number.parseFloat(bText)) &&
+          isFinite(bText)
+        ) {
+          valA = Number.parseFloat(aText)
+          valB = Number.parseFloat(bText)
+        } else if (sortBy === "timestamp") {
+          valA = new Date(aText).getTime()
+          valB = new Date(bText).getTime()
+        }
+
+        if (valA < valB) {
+          return newIsAsc ? -1 : 1
+        }
+        if (valA > valB) {
+          return newIsAsc ? 1 : -1
+        }
+        return 0
+      })
+
+      rows.forEach((row) => tbody.appendChild(row))
+    })
+  })
+}
+
+// --- Send Points Form Logic ---
+function setupSendPointsForm() {
+  const sendPointsForm = document.getElementById("send-points-form")
+  if (!sendPointsForm) return
+
+  sendPointsForm.addEventListener("submit", async (e) => {
+    e.preventDefault()
+    const fromUserEmailInput = document.getElementById("from-user-email")
+    const toUserEmailInput = document.getElementById("to-user-email")
+    const pointsAmountInput = document.getElementById("points-amount")
+
+    const fromUserEmail = fromUserEmailInput ? fromUserEmailInput.value.trim() : null
+    const toUserEmail = toUserEmailInput.value.trim()
+    const pointsAmount = Number.parseInt(pointsAmountInput.value, 10)
+
+    if (!toUserEmail || isNaN(pointsAmount) || pointsAmount <= 0) {
+      alert("Please provide a valid receiver email and a positive amount of points.")
+      return
+    }
+
+    const payload = {
+      to_user_email: toUserEmail,
+      points_amount: pointsAmount,
+    }
+
+    if (fromUserEmail) {
+      payload.from_user_email = fromUserEmail
+    }
+
+    try {
+      await fetchApi("/admin/point-transfers", "POST", payload, true)
+      console.log("Points sent successfully.") // Changed from alert
+      sendPointsForm.reset() // Clear the form
+      window.renderPointTransfers() // Re-render transfers table
+      renderDashboardOverview() // Update dashboard stats
+    } catch (error) {
+      alert(`Failed to send points: ${error.message}`)
+    }
+  })
+}
+
+// --- Fraud Management (Flags) ---
+async function renderFraudManagement() {
+  if (!fraudFlagsTableBody) return
+  fraudFlagsTableBody.innerHTML = ""
+
+  try {
+    const fraudFlags = await fetchApi("/admin/fraud-flags", "GET", null, true)
+
+    if (fraudFlags.length === 0) {
+      const row = fraudFlagsTableBody.insertRow()
+      row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No fraud flags found.</td>`
+      return
+    }
+
+    fraudFlags.forEach((flag) => {
+      const row = fraudFlagsTableBody.insertRow()
+      row.innerHTML = `
+          <td class="table-row-data font-medium text-gray-900">${flag.user.email}</td>
+          <td class="table-row-data">${flag.reason}</td>
+          <td class="table-row-data">${new Date(flag.created_at).toLocaleString()}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <button id="clear-flag-${flag.user.id}" class="action-btn clear-fraud-flag-btn text-red-600 hover:text-red-900">Clear Flag</button>
+          </td>
+        `
+    })
+
+    document.querySelectorAll(".clear-fraud-flag-btn").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        const userId = e.target.id.replace("clear-flag-", "")
+        clearFraudFlag(userId)
+      })
+    })
+  } catch (error) {
+    console.error("Failed to fetch fraud flags:", error)
+    alert(`Failed to load fraud flags: ${error.message}`)
   }
+}
 
-  // --- Expose functions globally ---
-  window.fetchApi = fetchApi
-  window.getSession = getSession
-  window.setSession = setSession
-  window.clearSession = clearSession
-  window.SESSION_KEY_TOKEN = SESSION_KEY_TOKEN
-  window.SESSION_KEY_USER_DATA = SESSION_KEY_USER_DATA
+async function clearFraudFlag(userId) {
+  if (!confirm("Are you sure you want to clear this fraud flag? This will also reset device tracking for this user.")) {
+    return
+  }
+  try {
+    await fetchApi(`/admin/fraud-flags/${userId}`, "DELETE", null, true)
+    console.log(`Fraud flag for user ID ${userId} cleared successfully.`) // Changed from alert
+    renderFraudManagement() // Re-render the flags table
+    renderUserManagement() // Re-render user table to reflect is_flagged status change
+  } catch (error) {
+    alert(`Failed to clear fraud flag: ${error.message}`)
+  }
+}
+
+// --- Fraud Management (Rules) ---
+async function renderFraudRules() {
+  if (!fraudRulesTableBody) return
+  fraudRulesTableBody.innerHTML = ""
+
+  try {
+    const fraudRules = await fetchApi("/admin/fraud/rules", "GET", null, true)
+
+    if (fraudRules.length === 0) {
+      const row = fraudRulesTableBody.insertRow()
+      row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No fraud rules found.</td>`
+      return
+    }
+
+    fraudRules.forEach((rule) => {
+      // Add defensive checks for rule and rule.rule_key
+      if (!rule || typeof rule.rule_key === "undefined" || rule.rule_key === null) {
+        console.warn("Skipping malformed fraud rule:", rule)
+        return
+      }
+
+      const row = fraudRulesTableBody.insertRow()
+      row.innerHTML = `
+          <td class="table-row-data font-medium text-gray-900">${rule.rule_key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
+          <td class="table-row-data">${rule.description || "N/A"}</td>
+          <td class="table-row-data">
+            <input type="number" value="${rule.limit_value}" class="input-field w-24 text-center fraud-rule-limit" data-rule-key="${rule.rule_key}" min="1">
+          </td>
+          <td class="table-row-data">
+            <select class="input-field fraud-rule-action" data-rule-key="${rule.rule_key}">
+              <option value="allow" ${rule.action === "allow" ? "selected" : ""}>Allow</option>
+              <option value="flag" ${rule.action === "flag" ? "selected" : ""}>Flag</option>
+              <option value="block" ${rule.action === "block" ? "selected" : ""}>Block</option>
+              <option value="flag_and_block" ${rule.action === "flag_and_block" ? "selected" : ""}>Flag & Block</option>
+            </select>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <button class="btn btn-primary save-fraud-rule-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md" data-rule-key="${rule.rule_key}">Save</button>
+          </td>
+        `
+      fraudRulesTableBody.appendChild(row)
+    })
+
+    document.querySelectorAll(".save-fraud-rule-btn").forEach((button) => {
+      button.addEventListener("click", async (e) => {
+        const ruleKey = e.target.dataset.ruleKey
+        const row = e.target.closest("tr")
+        const limitValue = Number.parseInt(row.querySelector(".fraud-rule-limit").value, 10)
+        const action = row.querySelector(".fraud-rule-action").value
+
+        if (isNaN(limitValue) || limitValue < 1) {
+          alert("Limit value must be a positive number.")
+          return
+        }
+
+        try {
+          // Only send limit_value and action, as rule_key is in the path
+          await fetchApi(`/admin/fraud/rules/${ruleKey}`, "POST", { limit_value: limitValue, action: action }, true)
+          console.log(`Fraud rule "${ruleKey}" updated successfully.`) // Changed from alert
+          renderFraudRules() // Re-render to show updated values
+        } catch (error) {
+          console.error("Error updating fraud rule:", error)
+          alert(`Failed to update fraud rule "${ruleKey}": ${error.message}`)
+        }
+      })
+    })
+  } catch (error) {
+    console.error("Failed to fetch fraud rules:", error)
+    alert(`Failed to load fraud rules: ${error.message}`)
+  }
+}
+
+// --- Global Event Listener for all pages ---
+document.addEventListener("DOMContentLoaded", () => {
+  protectRoute() // Run protection on every page load
+
+  // Initialize specific page logic based on current URL
+  const currentPath = window.location.pathname
+
+  if (currentPath === "/" || currentPath.includes("index.html")) {
+    // Covers root index.html (login)
+    handleLoginForm()
+  } else if (currentPath.includes("/pin/")) {
+    // Covers /pin/index.html
+    handlePinForm()
+  } else if (currentPath.includes("/dashboard/")) {
+    initializeDashboardElements()
+    setupSidebarAndNav()
+    setupSendPointsForm()
+    setupTableSorting()
+
+    // Determine initial section based on URL hash or default
+    const initialHash = window.location.hash.substring(1)
+    const initialSectionId = initialHash || "dashboard-overview-section"
+
+    // Set initial active link and section
+    const initialLink = document.getElementById(initialSectionId.replace("-section", "-link"))
+    if (initialLink) {
+      initialLink.classList.add("bg-gray-700", "text-white")
+    }
+    const initialSection = document.getElementById(initialSectionId)
+    if (initialSection) {
+      initialSection.classList.add("active")
+    }
+
+    // Initial render for the determined section on page load/refresh
+    renderSectionContent(initialSectionId) // THIS IS THE KEY CHANGE FOR REFRESH
+
+    // Logout button functionality
+    if (logoutButton) {
+      logoutButton.addEventListener("click", () => {
+        console.log("Logging out...") // Changed from alert
+        clearSession()
+        window.location.href = "/" // Redirect to root login page
+      })
+    }
+  }
+})
+\
 })()
