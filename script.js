@@ -308,7 +308,7 @@
           await renderSurveyManagement() // This will now show the "closed" message
           break
         case "point-transfers-section":
-          await renderPointTransfers() // Fixed undeclared variable error
+          await window.renderPointTransfers() // Fixed undeclared variable error
           break
         case "redemption-requests-section":
           await renderRedemptionRequests()
@@ -479,48 +479,78 @@
   async function renderUserManagement() {
     if (!userManagementTableBody) return
     userManagementTableBody.innerHTML = ""
-
-    const searchInput = document.getElementById("user-search-input")
-    const searchTerm = searchInput ? searchInput.value.toLowerCase() : ""
-
     try {
       users = await fetchApi("/admin/users", "GET", null, true)
 
       if (users.length === 0) {
         const row = userManagementTableBody.insertRow()
-        row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No users found.</td>`
+        row.innerHTML = `<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No users found.</td>`
         return
       }
 
-      const filteredUsers = users.filter(
-        (user) =>
-          !searchTerm ||
-          user.name.toLowerCase().includes(searchTerm) ||
-          user.email.toLowerCase().includes(searchTerm) ||
-          user.id.toString().includes(searchTerm),
-      )
+      // Apply search filter if exists
+      let filteredUsers = users
+      const searchTerm = document.getElementById("user-search")?.value?.toLowerCase()
+      if (searchTerm) {
+        filteredUsers = users.filter(
+          (user) =>
+            user.email.toLowerCase().includes(searchTerm) ||
+            user.name.toLowerCase().includes(searchTerm) ||
+            user.id.toString().includes(searchTerm),
+        )
+      }
 
       filteredUsers.forEach((user) => {
         const row = userManagementTableBody.insertRow()
+        const joinedDate = user.created_at
+          ? new Date(user.created_at).toLocaleDateString() + " " + new Date(user.created_at).toLocaleTimeString()
+          : "N/A"
+
         row.innerHTML = `
-              <td class="table-row-data">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  ID: ${user.id}
-                </span>
-              </td>
-              <td class="table-row-data font-medium text-gray-900">${user.name}</td>
-              <td class="table-row-data">${user.email}</td>
-              <td class="table-row-data text-sm text-gray-500">${user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}</td>
-              <td class="table-row-data capitalize">${user.status}</td>
-              <td class="table-row-data capitalize">${user.is_admin ? "Admin" : user.is_agent ? "Agent" : "User"}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  ${user.status === "pending" ? `<button id="approve-user-${user.id}" class="action-btn approve-user-btn text-green-600 hover:text-green-900 mr-2">Approve</button>` : ""}
-                  ${user.status === "pending" ? `<button id="reject-user-${user.id}" class="action-btn reject-user-btn text-red-600 hover:text-red-900 mr-2">Reject</button>` : ""}
-                  ${user.status === "approved" ? `<button id="suspend-user-${user.id}" class="action-btn suspend-user-btn text-yellow-600 hover:text-yellow-900 mr-2">Suspend</button>` : ""}
-                  ${user.status === "suspended" ? `<button id="reactivate-user-${user.id}" class="action-btn reactivate-user-btn text-blue-600 hover:text-blue-900 mr-2">Reactivate</button>` : ""}
-                  ${!user.is_agent && !user.is_admin ? `<button id="promote-user-${user.id}" class="action-btn promote-user-btn text-purple-600 hover:text-purple-900">Promote to Agent</button>` : user.is_agent && !user.is_admin ? `<button id="demote-user-${user.id}" class="action-btn demote-user-btn text-orange-600 hover:text-orange-900">Demote from Agent</button>` : ""}
-              </td>
-          `
+          <td class="table-row-data">
+            <div class="flex items-center">
+              <div class="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium mr-3">
+                ${user.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div class="font-medium text-gray-900">${user.name}</div>
+                <div class="text-xs text-gray-500">ID: ${user.id}</div>
+              </div>
+            </div>
+          </td>
+          <td class="table-row-data">${user.email}</td>
+          <td class="table-row-data">
+            <span class="px-2 py-1 text-xs font-medium rounded-full ${
+              user.status === "approved"
+                ? "bg-green-100 text-green-800"
+                : user.status === "pending"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : user.status === "suspended"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-gray-100 text-gray-800"
+            }">${user.status}</span>
+          </td>
+          <td class="table-row-data">
+            <span class="px-2 py-1 text-xs font-medium rounded-full ${
+              user.is_admin
+                ? "bg-purple-100 text-purple-800"
+                : user.is_agent
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-gray-100 text-gray-800"
+            }">${user.is_admin ? "Admin" : user.is_agent ? "Agent" : "User"}</span>
+          </td>
+          <td class="table-row-data text-sm text-gray-600">${joinedDate}</td>
+          <td class="table-row-data">${user.points || 0}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <div class="flex flex-wrap gap-1 justify-end">
+              ${user.status === "pending" ? `<button id="approve-user-${user.id}" class="action-btn approve-user-btn bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs">Approve</button>` : ""}
+              ${user.status === "pending" ? `<button id="reject-user-${user.id}" class="action-btn reject-user-btn bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">Reject</button>` : ""}
+              ${user.status === "approved" ? `<button id="suspend-user-${user.id}" class="action-btn suspend-user-btn bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">Suspend</button>` : ""}
+              ${user.status === "suspended" ? `<button id="reactivate-user-${user.id}" class="action-btn reactivate-user-btn bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs">Reactivate</button>` : ""}
+              ${!user.is_agent && !user.is_admin ? `<button id="promote-user-${user.id}" class="action-btn promote-user-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs">Promote to Agent</button>` : user.is_agent && !user.is_admin ? `<button id="demote-user-${user.id}" class="action-btn demote-user-btn bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded text-xs">Demote from Agent</button>` : ""}
+            </div>
+          </td>
+        `
       })
 
       document.querySelectorAll(".approve-user-btn").forEach((button) => {
@@ -544,7 +574,7 @@
       document.querySelectorAll(".reactivate-user-btn").forEach((button) => {
         button.addEventListener("click", (e) => {
           const userId = e.target.id.replace("reactivate-user-", "")
-          updateUserStatus(userId, "approved") // Backend uses 'approved' for reactivate
+          updateUserStatus(userId, "approved")
         })
       })
       document.querySelectorAll(".promote-user-btn").forEach((button) => {
@@ -567,21 +597,16 @@
           if (pendingUserIds.length > 0) {
             if (confirm(`Are you sure you want to approve ${pendingUserIds.length} pending users?`)) {
               try {
-                await fetchApi(
-                  "/admin/users/bulk-status",
-                  "PUT",
-                  { user_ids: pendingUserIds, status: "approved" },
-                  true,
-                )
-                console.log("All pending users approved!") // Changed from alert
+                await fetchApi("/admin/users/bulk-approve", "POST", { user_ids: pendingUserIds }, true)
+                showNotification("All pending users approved successfully!", "success")
                 renderUserManagement()
                 renderDashboardOverview()
               } catch (error) {
-                alert(`Failed to bulk approve users: ${error.message}`)
+                showNotification(`Failed to approve users: ${error.message}`, "error")
               }
             }
           } else {
-            alert("No pending users to approve.")
+            showNotification("No pending users to approve.", "info")
           }
         })
       }
@@ -592,34 +617,62 @@
           if (pendingUserIds.length > 0) {
             if (
               confirm(
-                `Are you sure you want to reject and delete ${pendingUserIds.length} pending users? This action is irreversible.`,
+                `Are you sure you want to reject and permanently delete ${pendingUserIds.length} pending users? This action is irreversible.`,
               )
             ) {
               try {
-                await fetchApi(
-                  "/admin/users/bulk-status",
-                  "PUT",
-                  { user_ids: pendingUserIds, status: "rejected" },
-                  true,
-                )
-                console.log("All pending users rejected and deleted!") // Changed from alert
+                await fetchApi("/admin/users/bulk-reject", "POST", { user_ids: pendingUserIds }, true)
+                showNotification("All pending users rejected successfully!", "success")
                 renderUserManagement()
                 renderDashboardOverview()
               } catch (error) {
-                alert(`Failed to bulk reject users: ${error.message}`)
+                showNotification(`Failed to reject users: ${error.message}`, "error")
               }
             }
           } else {
-            alert("No pending users to reject.")
+            showNotification("No pending users to reject.", "info")
           }
         })
       }
-
-      // Call the new setup function after elements are rendered
-      setupUserManagementListeners()
     } catch (error) {
       console.error("Failed to fetch users:", error)
-      alert(`Failed to load user data: ${error.message}`)
+      showNotification(`Failed to load user data: ${error.message}`, "error")
+    }
+  }
+
+  async function updateUserStatus(userId, newStatus) {
+    try {
+      if (
+        newStatus === "rejected" &&
+        !confirm("Are you sure you want to reject and permanently delete this user? This action is irreversible.")
+      ) {
+        return
+      }
+      await fetchApi(`/admin/users/${userId}/status`, "PUT", { status: newStatus }, true)
+      showNotification(`User status updated to ${newStatus}.`, "success")
+      renderUserManagement()
+      renderDashboardOverview()
+    } catch (error) {
+      showNotification(`Failed to update user status: ${error.message}`, "error")
+    }
+  }
+
+  async function promoteUserToAgent(userId, isAgent) {
+    try {
+      const data = await fetchApi(
+        `/admin/users/${userId}/agent`,
+        "PUT",
+        { user_id: Number.parseInt(userId), is_agent: isAgent },
+        true,
+      )
+      showNotification(
+        `Agent role ${isAgent ? "assigned" : "removed"}. Referral code: ${data.referral_code || "N/A"}`,
+        "success",
+      )
+      renderUserManagement()
+      renderAgentManagement()
+    } catch (error) {
+      showNotification(`Failed to update agent role: ${error.message}`, "error")
     }
   }
 
@@ -708,39 +761,6 @@
         updateLabelUI(e.target.checked)
       }
     })
-  }
-
-  async function updateUserStatus(userId, newStatus) {
-    try {
-      if (
-        newStatus === "rejected" &&
-        !confirm("Are you sure you want to reject and permanently delete this user? This action is irreversible.")
-      ) {
-        return // Stop if user cancels
-      }
-      await fetchApi(`/admin/users/${userId}/status`, "PUT", { status: newStatus }, true)
-      console.log(`User status updated to ${newStatus}.`) // Changed from alert
-      renderUserManagement() // Re-render table
-      renderDashboardOverview()
-    } catch (error) {
-      alert(`Failed to update user status: ${error.message}`)
-    }
-  }
-
-  async function promoteUserToAgent(userId, isAgent) {
-    try {
-      const data = await fetchApi(
-        `/admin/users/${userId}/agent`,
-        "PUT",
-        { user_id: Number.parseInt(userId), is_agent: isAgent },
-        true,
-      )
-      console.log(`Agent role ${isAgent ? "assigned" : "removed"}. Referral code: ${data.referral_code || "N/A"}`) // Changed from alert
-      renderUserManagement() // Re-render user table
-      renderAgentManagement() // Re-render agent table
-    } catch (error) {
-      alert(`Failed to update agent role: ${error.message}`)
-    }
   }
 
   // --- Agent Management ---
@@ -1264,4 +1284,18 @@
       }
     }
   })
+
+  function showNotification(message, type = "info") {
+    const notificationDiv = document.createElement("div")
+    notificationDiv.className = `fixed top-4 right-4 z-50 p-4 rounded shadow-lg text-white ${
+      type === "success" ? "bg-green-500" : type === "error" ? "bg-red-500" : "bg-blue-500"
+    }`
+    notificationDiv.textContent = message
+    document.body.appendChild(notificationDiv)
+
+    // Remove the notification after 3 seconds
+    setTimeout(() => {
+      document.body.removeChild(notificationDiv)
+    }, 3000)
+  }
 })()
