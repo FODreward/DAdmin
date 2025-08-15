@@ -209,8 +209,6 @@
   let logoutButton
   let fraudFlagsTableBody
   let fraudRulesTableBody // Added for fraud rules
-  let userSearchInput, agentSearchInput
-  let mobileOverlay, mobileMenuBtn
 
   function initializeDashboardElements() {
     sidebar = document.getElementById("sidebar")
@@ -241,34 +239,6 @@
     logoutButton = document.getElementById("logout-button")
     fraudFlagsTableBody = document.getElementById("fraud-flags-table-body")
     fraudRulesTableBody = document.getElementById("fraud-rules-table-body") // Added for fraud rules
-
-    userSearchInput = document.getElementById("user-search-input")
-    agentSearchInput = document.getElementById("agent-search-input")
-
-    mobileOverlay = document.getElementById("mobile-overlay")
-    mobileMenuBtn = document.getElementById("mobile-menu-btn")
-  }
-
-  function setupMobileNavigation() {
-    if (mobileMenuBtn && sidebar && mobileOverlay) {
-      mobileMenuBtn.addEventListener("click", () => {
-        sidebar.classList.add("mobile-open")
-        mobileOverlay.classList.add("active")
-      })
-
-      mobileOverlay.addEventListener("click", () => {
-        sidebar.classList.remove("mobile-open")
-        mobileOverlay.classList.remove("active")
-      })
-
-      // Close mobile menu when clicking nav links
-      navLinks.forEach((link) => {
-        link.addEventListener("click", () => {
-          sidebar.classList.remove("mobile-open")
-          mobileOverlay.classList.remove("active")
-        })
-      })
-    }
   }
 
   // --- Sidebar & Navigation Logic ---
@@ -317,65 +287,6 @@
     })
   }
 
-  function setupSearchFunctionality() {
-    if (userSearchInput) {
-      userSearchInput.addEventListener(
-        "input",
-        debounce(() => {
-          renderUserManagement()
-        }, 300),
-      )
-    }
-
-    if (agentSearchInput) {
-      agentSearchInput.addEventListener(
-        "input",
-        debounce(() => {
-          renderAgentManagement()
-        }, 300),
-      )
-    }
-  }
-
-  function debounce(func, wait) {
-    let timeout
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout)
-        func(...args)
-      }
-      clearTimeout(timeout)
-      timeout = setTimeout(later, wait)
-    }
-  }
-
-  function setupToggleFunctionality() {
-    if (autoUserApprovalToggle) {
-      const toggleBg = autoUserApprovalToggle.parentElement.querySelector(".toggle-bg")
-      const toggleLabel = document.getElementById("approvalStatusLabel")
-
-      autoUserApprovalToggle.addEventListener("change", async () => {
-        const isEnabled = autoUserApprovalToggle.checked
-
-        // Update UI immediately for better UX
-        toggleBg.classList.toggle("active", isEnabled)
-        toggleLabel.textContent = isEnabled ? "Auto-Approval is ON" : "Auto-Approval is OFF"
-
-        try {
-          // Make API call to update setting
-          await fetchApi("/admin/settings/auto-approval", "PUT", { enabled: isEnabled }, true)
-        } catch (error) {
-          console.error("Failed to update auto-approval setting:", error)
-          // Revert UI on error
-          autoUserApprovalToggle.checked = !isEnabled
-          toggleBg.classList.toggle("active", !isEnabled)
-          toggleLabel.textContent = !isEnabled ? "Auto-Approval is ON" : "Auto-Approval is OFF"
-          alert("Failed to update auto-approval setting. Please try again.")
-        }
-      })
-    }
-  }
-
   async function renderSectionContent(sectionId) {
     // Add loading indicators here if desired
     try {
@@ -397,7 +308,7 @@
           await renderSurveyManagement() // This will now show the "closed" message
           break
         case "point-transfers-section":
-          await window.renderPointTransfers()
+          window.renderPointTransfers() // Call the global function
           break
         case "redemption-requests-section":
           await renderRedemptionRequests()
@@ -447,7 +358,7 @@
       logs.forEach((log) => {
         const row = activityLogTableBody.insertRow()
         row.innerHTML = `
-          <td class="table-row-data font-medium text-gray-900">${new Date(log.timestamp).toLocaleString()}</td>
+          <td class="table-row-data">${new Date(log.timestamp).toLocaleString()}</td>
           <td class="table-row-data font-medium text-gray-900">${log.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
           <td class="table-row-data">${log.message}</td>
         `
@@ -1270,6 +1181,59 @@
     }
   }
 
+  // --- Mobile Navigation Setup ---
+  function setupMobileNavigation() {
+    // Mobile navigation logic here
+    const mobileMenuToggle = document.getElementById("mobile-menu-toggle")
+    const mobileMenu = document.getElementById("mobile-menu")
+
+    if (mobileMenuToggle && mobileMenu) {
+      mobileMenuToggle.addEventListener("click", () => {
+        mobileMenu.classList.toggle("hidden")
+      })
+    }
+  }
+
+  // --- Search Functionality Setup ---
+  function setupSearchFunctionality() {
+    // Search functionality logic here
+    const searchInput = document.getElementById("search-input")
+    const searchResults = document.getElementById("search-results")
+
+    if (searchInput && searchResults) {
+      searchInput.addEventListener("input", async (e) => {
+        const query = e.target.value.trim()
+        if (query) {
+          try {
+            const results = await fetchApi("/admin/search", "GET", { query }, true)
+            searchResults.innerHTML = ""
+            results.forEach((result) => {
+              const row = searchResults.insertRow()
+              row.innerHTML = `<td>${result.name}</td><td>${result.email}</td>`
+            })
+          } catch (error) {
+            console.error("Failed to fetch search results:", error)
+            searchResults.innerHTML = `<td colspan="2">No results found.</td>`
+          }
+        } else {
+          searchResults.innerHTML = ""
+        }
+      })
+    }
+  }
+
+  // --- Toggle Functionality Setup ---
+  function setupToggleFunctionality() {
+    // Toggle functionality logic here
+    const toggleButtons = document.querySelectorAll(".toggle-btn")
+
+    toggleButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        button.classList.toggle("active")
+      })
+    })
+  }
+
   // --- Global Event Listener for all pages ---
   document.addEventListener("DOMContentLoaded", () => {
     protectRoute() // Run protection on every page load
@@ -1286,8 +1250,11 @@
     } else if (currentPath.includes("/dashboard/")) {
       initializeDashboardElements()
       setupSidebarAndNav()
+      setupMobileNavigation()
+      setupSearchFunctionality()
       setupSendPointsForm()
       setupTableSorting()
+      setupToggleFunctionality()
 
       // Determine initial section based on URL hash or default
       const initialHash = window.location.hash.substring(1)
@@ -1298,22 +1265,9 @@
       if (initialLink) {
         initialLink.classList.add("bg-gray-700", "text-white")
       }
-      const initialSection = document.getElementById(initialSectionId)
-      if (initialSection) {
-        initialSection.classList.add("active")
-      }
 
-      // Initial render for the determined section on page load/refresh
-      renderSectionContent(initialSectionId) // THIS IS THE KEY CHANGE FOR REFRESH
-
-      // Logout button functionality
-      if (logoutButton) {
-        logoutButton.addEventListener("click", () => {
-          console.log("Logging out...") // Changed from alert
-          clearSession()
-          window.location.href = "/" // Redirect to root login page
-        })
-      }
+      document.getElementById(initialSectionId).classList.add("active")
+      renderSectionContent(initialSectionId)
     }
   })
 })()
