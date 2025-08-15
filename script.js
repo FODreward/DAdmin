@@ -2,7 +2,7 @@
 // It exposes `fetchApi`, `getSession`, `setSession`, `clearSession`,
 // `SESSION_KEY_TOKEN`, `SESSION_KEY_USER_DATA` globally via the window object.
 
-(() => {
+;(() => {
   // --- API Configuration ---
   const API_BASE_URL = "https://api.survecta.com/api"
 
@@ -58,10 +58,10 @@
 
       // --- NEW: Session Expiry Check ---
       if (response.status === 401) {
-        console.warn("Session expired or unauthorized. Logging out.");
-        clearSession();
-        window.location.href = "/"; // Redirect to login page
-        throw new Error("Session expired or unauthorized."); // Stop further processing
+        console.warn("Session expired or unauthorized. Logging out.")
+        clearSession()
+        window.location.href = "/" // Redirect to login page
+        throw new Error("Session expired or unauthorized.") // Stop further processing
       }
       // --- END NEW ---
 
@@ -70,8 +70,12 @@
       if (!response.ok) {
         console.error("API Error:", data.detail || response.statusText)
         // Improved error message handling
-        const errorMessage = data.detail ? (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)) : response.statusText;
-        throw new Error(errorMessage || "Something went wrong");
+        const errorMessage = data.detail
+          ? typeof data.detail === "string"
+            ? data.detail
+            : JSON.stringify(data.detail)
+          : response.statusText
+        throw new Error(errorMessage || "Something went wrong")
       }
       return data
     } catch (error) {
@@ -136,7 +140,13 @@
         const user_agent = navigator.userAgent
 
         try {
-          const data = await fetchApi("/auth/login", "POST", { email, password, device_fingerprint, ip_address, user_agent })
+          const data = await fetchApi("/auth/login", "POST", {
+            email,
+            password,
+            device_fingerprint,
+            ip_address,
+            user_agent,
+          })
           setSession(SESSION_KEY_AUTH, true)
           setSession(SESSION_KEY_TOKEN, data.access_token)
           setSession(SESSION_KEY_USER_DATA, data.user) // Store user data
@@ -177,10 +187,8 @@
   // --- Dashboard Specific Logic ---
 
   // --- Data Storage (Now fetched from API) ---
-  const users = []
-  const agents = []
-  let filteredUsers = [] // Added for search functionality
-  let filteredAgents = [] // Added for search functionality
+  let users = []
+  let agents = []
   // const surveys = [] // No longer needed as surveys are fetched dynamically
   // const pointTransfers = [] // No longer needed as transfers are fetched dynamically
   // let redemptionRequests = [] // No longer needed as redemptions are fetched dynamically
@@ -199,8 +207,8 @@
   let autoUserApprovalToggle, approveAllPendingUsersBtn, rejectAllPendingUsersBtn
   let sendPointsForm
   let logoutButton
-  let fraudFlagsTableBody;
-  let fraudRulesTableBody; // Added for fraud rules
+  let fraudFlagsTableBody
+  let fraudRulesTableBody // Added for fraud rules
 
   function initializeDashboardElements() {
     sidebar = document.getElementById("sidebar")
@@ -229,8 +237,8 @@
 
     sendPointsForm = document.getElementById("send-points-form")
     logoutButton = document.getElementById("logout-button")
-    fraudFlagsTableBody = document.getElementById("fraud-flags-table-body");
-    fraudRulesTableBody = document.getElementById("fraud-rules-table-body"); // Added for fraud rules
+    fraudFlagsTableBody = document.getElementById("fraud-flags-table-body")
+    fraudRulesTableBody = document.getElementById("fraud-rules-table-body") // Added for fraud rules
   }
 
   // --- Sidebar & Navigation Logic ---
@@ -249,7 +257,7 @@
           const targetSectionId = link.id.replace("-link", "-section")
 
           // Update URL hash without full page reload
-          history.pushState(null, '', `#${targetSectionId}`);
+          history.pushState(null, "", `#${targetSectionId}`)
 
           navLinks.forEach((nav) => nav.classList.remove("bg-gray-700", "text-white"))
           sections.forEach((sec) => sec.classList.remove("active"))
@@ -263,20 +271,20 @@
     }
 
     // Handle browser back/forward buttons
-    window.addEventListener('popstate', () => {
-      const hash = window.location.hash.substring(1); // Remove '#'
-      const targetSectionId = hash || 'dashboard-overview-section'; // Default if no hash
+    window.addEventListener("popstate", () => {
+      const hash = window.location.hash.substring(1) // Remove '#'
+      const targetSectionId = hash || "dashboard-overview-section" // Default if no hash
 
-      navLinks.forEach((nav) => nav.classList.remove("bg-gray-700", "text-white"));
-      sections.forEach((sec) => sec.classList.remove("active"));
+      navLinks.forEach((nav) => nav.classList.remove("bg-gray-700", "text-white"))
+      sections.forEach((sec) => sec.classList.remove("active"))
 
-      const correspondingLink = document.getElementById(targetSectionId.replace("-section", "-link"));
+      const correspondingLink = document.getElementById(targetSectionId.replace("-section", "-link"))
       if (correspondingLink) {
-        correspondingLink.classList.add("bg-gray-700", "text-white");
+        correspondingLink.classList.add("bg-gray-700", "text-white")
       }
-      document.getElementById(targetSectionId).classList.add("active");
-      renderSectionContent(targetSectionId);
-    });
+      document.getElementById(targetSectionId).classList.add("active")
+      renderSectionContent(targetSectionId)
+    })
   }
 
   async function renderSectionContent(sectionId) {
@@ -300,15 +308,15 @@
           await renderSurveyManagement() // This will now show the "closed" message
           break
         case "point-transfers-section":
-          await renderPointTransfers()
+          await renderPointTransfers() // Fixed undeclared variable error
           break
         case "redemption-requests-section":
           await renderRedemptionRequests()
           break
         case "fraud-management-section":
-          await renderFraudManagement();
-          await renderFraudRules(); // Render fraud rules when fraud management section is active
-          break;
+          await renderFraudManagement()
+          await renderFraudRules() // Render fraud rules when fraud management section is active
+          break
       }
     } catch (error) {
       console.error(`Error rendering section ${sectionId}:`, error)
@@ -345,7 +353,7 @@
       if (logs.length === 0) {
         const row = activityLogTableBody.insertRow()
         row.innerHTML = `<td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No recent activity.</td>`
-        return;
+        return
       }
       logs.forEach((log) => {
         const row = activityLogTableBody.insertRow()
@@ -363,13 +371,13 @@
 
   // --- System Settings ---
   async function renderSystemSettings() {
-    const systemSettingsTableBody = document.getElementById("system-settings-table-body");
-    if (!systemSettingsTableBody) return;
+    const systemSettingsTableBody = document.getElementById("system-settings-table-body")
+    if (!systemSettingsTableBody) return
 
-    systemSettingsTableBody.innerHTML = "";
+    systemSettingsTableBody.innerHTML = ""
 
     try {
-      const systemSettings = await fetchApi("/admin/settings", "GET", null, true);
+      const systemSettings = await fetchApi("/admin/settings", "GET", null, true)
 
       systemSettings.forEach((setting) => {
         // Skip rendering fraud rules in System Settings, as they are managed under Fraud Management
@@ -378,21 +386,21 @@
           "max_users_per_fingerprint",
           "max_ips_per_user_24h",
           "max_signups_per_fingerprint_24h",
-        ];
+        ]
         if (fraudRuleKeys.includes(setting.key)) {
-          return; // Skip this iteration
+          return // Skip this iteration
         }
 
-        const isToggle = setting.key === "auto_user_approval"; // Use specific key for toggle
-        const isChecked = setting.value === "true";
+        const isToggle = setting.key === "auto_user_approval" // Use specific key for toggle
+        const isChecked = setting.value === "true"
 
-        const row = document.createElement("tr");
-        row.setAttribute("data-key", setting.key);
+        const row = document.createElement("tr")
+        row.setAttribute("data-key", setting.key)
 
         row.innerHTML = `
           <td class="px-4 py-2 font-medium text-gray-800">
             ${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-            ${setting.description ? `<p class="text-xs text-gray-500 mt-1">${setting.description}</p>` : ''}
+            ${setting.description ? `<p class="text-xs text-gray-500 mt-1">${setting.description}</p>` : ""}
           </td>
           <td class="px-4 py-2">
             ${
@@ -400,13 +408,13 @@
                 ? `
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" class="sr-only peer setting-toggle" id="${setting.key}-toggle" ${isChecked ? "checked" : ""} />
-                <div class="toggle-bg ${isChecked ? 'checked' : ''}">
-                  <div class="toggle-dot ${isChecked ? 'checked' : ''}"></div>
+                <div class="toggle-bg ${isChecked ? "checked" : ""}">
+                  <div class="toggle-dot ${isChecked ? "checked" : ""}"></div>
                 </div>
               </label>
               <span class="ml-3 text-sm font-semibold text-gray-700" id="${setting.key}-status">${
-                    isChecked ? "ON" : "OFF"
-                  }</span>
+                isChecked ? "ON" : "OFF"
+              }</span>
             `
                 : `<input type="text" value="${setting.value}" class="input-field" id="${setting.key}-input">`
             }
@@ -414,541 +422,529 @@
           <td class="px-4 py-2">
             <button class="btn btn-primary save-setting-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md" data-setting="${setting.key}">Save</button>
           </td>
-        `;
+        `
 
-        systemSettingsTableBody.appendChild(row);
+        systemSettingsTableBody.appendChild(row)
 
         // Toggle logic
         if (isToggle) {
-          const input = row.querySelector(`#${setting.key}-toggle`);
-          const toggleBg = row.querySelector('.toggle-bg');
-          const toggleDot = row.querySelector('.toggle-dot');
-          const status = row.querySelector(`#${setting.key}-status`);
+          const input = row.querySelector(`#${setting.key}-toggle`)
+          const toggleBg = row.querySelector(".toggle-bg")
+          const toggleDot = row.querySelector(".toggle-dot")
+          const status = row.querySelector(`#${setting.key}-status`)
 
           input.addEventListener("change", () => {
-            const checked = input.checked;
+            const checked = input.checked
             if (checked) {
-              toggleBg.classList.add('checked');
-              toggleDot.classList.add('checked');
+              toggleBg.classList.add("checked")
+              toggleDot.classList.add("checked")
             } else {
-              toggleBg.classList.remove('checked');
-              toggleDot.classList.remove('checked');
+              toggleBg.classList.remove("checked")
+              toggleDot.classList.remove("checked")
             }
-            status.textContent = checked ? "ON" : "OFF";
-          });
+            status.textContent = checked ? "ON" : "OFF"
+          })
         }
 
         // Save logic
-        const saveBtn = row.querySelector(".save-setting-btn");
+        const saveBtn = row.querySelector(".save-setting-btn")
         saveBtn.addEventListener("click", async () => {
-          let value;
+          let value
           if (isToggle) {
-            const input = row.querySelector(`#${setting.key}-toggle`);
-            value = input.checked.toString();
+            const input = row.querySelector(`#${setting.key}-toggle`)
+            value = input.checked.toString()
           } else {
-            const input = row.querySelector(`#${setting.key}-input`);
-            value = input.value.trim();
+            const input = row.querySelector(`#${setting.key}-input`)
+            value = input.value.trim()
           }
 
           try {
             // Use the description from the fetched setting or default to empty string
-            const descriptionToSend = setting.description || "";
-            await fetchApi("/admin/settings", "PUT", { key: setting.key, value, description: descriptionToSend }, true);
-            console.log(`Setting "${setting.key}" updated successfully.`); // Changed from alert
+            const descriptionToSend = setting.description || ""
+            await fetchApi("/admin/settings", "PUT", { key: setting.key, value, description: descriptionToSend }, true)
+            console.log(`Setting "${setting.key}" updated successfully.`) // Changed from alert
           } catch (err) {
-            console.error("Error updating setting:", err);
-            alert(`Failed to update "${setting.key}".`);
+            console.error("Error updating setting:", err)
+            alert(`Failed to update "${setting.key}".`)
           }
-        });
-      });
+        })
+      })
     } catch (err) {
-      console.error("Failed to load system settings:", err);
-      alert("Could not load system settings.");
+      console.error("Failed to load system settings:", err)
+      alert("Could not load system settings.")
     }
   }
 
-  function initializeSearch() {
-    const userSearchInput = document.getElementById('user-search')
-    const agentSearchInput = document.getElementById('agent-search')
-
-    if (userSearchInput) {
-      userSearchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase()
-        filteredUsers = users.filter(user => 
-          user.email.toLowerCase().includes(searchTerm) ||
-          user.id.toString().includes(searchTerm) ||
-          (user.first_name && user.first_name.toLowerCase().includes(searchTerm)) ||
-          (user.last_name && user.last_name.toLowerCase().includes(searchTerm))
-        )
-        renderUserManagement()
-      })
-    }
-
-    if (agentSearchInput) {
-      agentSearchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase()
-        filteredAgents = agents.filter(agent => 
-          agent.email.toLowerCase().includes(searchTerm) ||
-          agent.id.toString().includes(searchTerm) ||
-          (agent.first_name && agent.first_name.toLowerCase().includes(searchTerm)) ||
-          (agent.last_name && agent.last_name.toLowerCase().includes(searchTerm)) ||
-          (agent.referral_code && agent.referral_code.toLowerCase().includes(searchTerm))
-        )
-        renderAgentManagement()
-      })
-    }
-  }
-
-  function renderUserManagement() {
+  // --- User Management ---
+  async function renderUserManagement() {
     if (!userManagementTableBody) return
+    userManagementTableBody.innerHTML = ""
 
-    const usersToRender = filteredUsers.length > 0 || document.getElementById('user-search')?.value ? filteredUsers : users
+    const searchInput = document.getElementById("user-search-input")
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : ""
 
-    userManagementTableBody.innerHTML = usersToRender
-      .map(
-        (user) => `
-        <tr class="border-b border-gray-200 hover:bg-gray-50">
-          <td class="px-4 py-3">
-            <div class="flex items-center space-x-3">
-              <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                ${(user.first_name?.[0] || user.email[0]).toUpperCase()}
-              </div>
-              <div>
-                <div class="font-medium text-gray-900">${user.first_name || ''} ${user.last_name || ''}</div>
-                <div class="text-sm text-gray-500">ID: ${user.id}</div>
-                <div class="text-sm text-gray-500">${user.email}</div>
-                <div class="text-xs text-gray-400">Joined: ${new Date(user.created_at).toLocaleDateString()} ${new Date(user.created_at).toLocaleTimeString()}</div>
-              </div>
-            </div>
-          </td>
-          <td class="px-4 py-3">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              user.is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-            }">
-              ${user.is_verified ? 'Verified' : 'Pending'}
-            </span>
-          </td>
-          <td class="px-4 py-3">
-            <span class="font-medium text-gray-900">${user.points_balance || 0}</span>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center space-x-2">
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" ${user.is_verified ? 'checked' : ''} 
-                       onchange="toggleUserVerification(${user.id}, this.checked)" 
-                       class="sr-only peer">
-                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
-              <button onclick="deleteUser(${user.id})" 
-                      class="text-red-600 hover:text-red-800 text-sm font-medium">
-                Delete
-              </button>
-            </div>
-          </td>
-        </tr>
-      `
+    try {
+      users = await fetchApi("/admin/users", "GET", null, true)
+
+      if (users.length === 0) {
+        const row = userManagementTableBody.insertRow()
+        row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No users found.</td>`
+        return
+      }
+
+      const filteredUsers = users.filter(
+        (user) =>
+          !searchTerm ||
+          user.name.toLowerCase().includes(searchTerm) ||
+          user.email.toLowerCase().includes(searchTerm) ||
+          user.id.toString().includes(searchTerm),
       )
-      .join("")
-  }
 
-  function renderAgentManagement() {
-    if (!agentManagementTableBody) return
+      filteredUsers.forEach((user) => {
+        const row = userManagementTableBody.insertRow()
+        row.innerHTML = `
+              <td class="table-row-data">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  ID: ${user.id}
+                </span>
+              </td>
+              <td class="table-row-data font-medium text-gray-900">${user.name}</td>
+              <td class="table-row-data">${user.email}</td>
+              <td class="table-row-data text-sm text-gray-500">${user.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}</td>
+              <td class="table-row-data capitalize">${user.status}</td>
+              <td class="table-row-data capitalize">${user.is_admin ? "Admin" : user.is_agent ? "Agent" : "User"}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  ${user.status === "pending" ? `<button id="approve-user-${user.id}" class="action-btn approve-user-btn text-green-600 hover:text-green-900 mr-2">Approve</button>` : ""}
+                  ${user.status === "pending" ? `<button id="reject-user-${user.id}" class="action-btn reject-user-btn text-red-600 hover:text-red-900 mr-2">Reject</button>` : ""}
+                  ${user.status === "approved" ? `<button id="suspend-user-${user.id}" class="action-btn suspend-user-btn text-yellow-600 hover:text-yellow-900 mr-2">Suspend</button>` : ""}
+                  ${user.status === "suspended" ? `<button id="reactivate-user-${user.id}" class="action-btn reactivate-user-btn text-blue-600 hover:text-blue-900 mr-2">Reactivate</button>` : ""}
+                  ${!user.is_agent && !user.is_admin ? `<button id="promote-user-${user.id}" class="action-btn promote-user-btn text-purple-600 hover:text-purple-900">Promote to Agent</button>` : user.is_agent && !user.is_admin ? `<button id="demote-user-${user.id}" class="action-btn demote-user-btn text-orange-600 hover:text-orange-900">Demote from Agent</button>` : ""}
+              </td>
+          `
+      })
 
-    const agentsToRender = filteredAgents.length > 0 || document.getElementById('agent-search')?.value ? filteredAgents : agents
+      document.querySelectorAll(".approve-user-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const userId = e.target.id.replace("approve-user-", "")
+          updateUserStatus(userId, "approved")
+        })
+      })
+      document.querySelectorAll(".reject-user-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const userId = e.target.id.replace("reject-user-", "")
+          updateUserStatus(userId, "rejected")
+        })
+      })
+      document.querySelectorAll(".suspend-user-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const userId = e.target.id.replace("suspend-user-", "")
+          updateUserStatus(userId, "suspended")
+        })
+      })
+      document.querySelectorAll(".reactivate-user-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const userId = e.target.id.replace("reactivate-user-", "")
+          updateUserStatus(userId, "approved") // Backend uses 'approved' for reactivate
+        })
+      })
+      document.querySelectorAll(".promote-user-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const userId = e.target.id.replace("promote-user-", "")
+          promoteUserToAgent(userId, true)
+        })
+      })
+      document.querySelectorAll(".demote-user-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const userId = e.target.id.replace("demote-user-", "")
+          promoteUserToAgent(userId, false)
+        })
+      })
 
-    agentManagementTableBody.innerHTML = agentsToRender
-      .map(
-        (agent) => `
-        <tr class="border-b border-gray-200 hover:bg-gray-50">
-          <td class="px-4 py-3">
-            <div class="flex items-center space-x-3">
-              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                ${(agent.first_name?.[0] || agent.email[0]).toUpperCase()}
-              </div>
-              <div>
-                <div class="font-medium text-gray-900">${agent.first_name || ''} ${agent.last_name || ''}</div>
-                <div class="text-sm text-gray-500">ID: ${agent.id}</div>
-                <div class="text-sm text-gray-500">${agent.email}</div>
-                <div class="text-xs text-gray-400">Appointed: ${new Date(agent.created_at).toLocaleDateString()} ${new Date(agent.created_at).toLocaleTimeString()}</div>
-              </div>
-            </div>
-          </td>
-          <td class="px-4 py-3">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              ${agent.referral_code || 'N/A'}
-            </span>
-          </td>
-          <td class="px-4 py-3">
-            <span class="font-medium text-gray-900">${agent.points_balance || 0}</span>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center space-x-2">
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" ${agent.is_agent ? 'checked' : ''} 
-                       onchange="toggleAgentStatus(${agent.id}, this.checked)" 
-                       class="sr-only peer">
-                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-              </label>
-              <button onclick="deleteAgent(${agent.id})" 
-                      class="text-red-600 hover:text-red-800 text-sm font-medium">
-                Remove
-              </button>
-            </div>
-          </td>
-        </tr>
-      `
-      )
-      .join("")
-  }
+      // Bulk actions
+      if (approveAllPendingUsersBtn) {
+        approveAllPendingUsersBtn.addEventListener("click", async () => {
+          const pendingUserIds = users.filter((user) => user.status === "pending").map((user) => user.id)
+          if (pendingUserIds.length > 0) {
+            if (confirm(`Are you sure you want to approve ${pendingUserIds.length} pending users?`)) {
+              try {
+                await fetchApi(
+                  "/admin/users/bulk-status",
+                  "PUT",
+                  { user_ids: pendingUserIds, status: "approved" },
+                  true,
+                )
+                console.log("All pending users approved!") // Changed from alert
+                renderUserManagement()
+                renderDashboardOverview()
+              } catch (error) {
                 alert(`Failed to bulk approve users: ${error.message}`)
+              }
             }
-\
-          } else
-{
-  alert("No pending users to approve.")
-}
-\
+          } else {
+            alert("No pending users to approve.")
+          }
         })
       }
 
-if (rejectAllPendingUsersBtn) {
-  rejectAllPendingUsersBtn.addEventListener("click", async () => {
-    const pendingUserIds = users.filter((user) => user.status === "pending").map((user) => user.id)
-    if (pendingUserIds.length > 0) {
-      if (
-        confirm(
-          `Are you sure you want to reject and delete ${pendingUserIds.length} pending users? This action is irreversible.`,
-        )
-      ) {
-        try {
-          await fetchApi("/admin/users/bulk-status", "PUT", { user_ids: pendingUserIds, status: "rejected" }, true)
-          console.log("All pending users rejected and deleted!") // Changed from alert
-          renderUserManagement()
-          renderDashboardOverview()
-        } catch (error) {
-          alert(`Failed to bulk reject users: ${error.message}`)
-        }
+      if (rejectAllPendingUsersBtn) {
+        rejectAllPendingUsersBtn.addEventListener("click", async () => {
+          const pendingUserIds = users.filter((user) => user.status === "pending").map((user) => user.id)
+          if (pendingUserIds.length > 0) {
+            if (
+              confirm(
+                `Are you sure you want to reject and delete ${pendingUserIds.length} pending users? This action is irreversible.`,
+              )
+            ) {
+              try {
+                await fetchApi(
+                  "/admin/users/bulk-status",
+                  "PUT",
+                  { user_ids: pendingUserIds, status: "rejected" },
+                  true,
+                )
+                console.log("All pending users rejected and deleted!") // Changed from alert
+                renderUserManagement()
+                renderDashboardOverview()
+              } catch (error) {
+                alert(`Failed to bulk reject users: ${error.message}`)
+              }
+            }
+          } else {
+            alert("No pending users to reject.")
+          }
+        })
       }
-    } else {
-      alert("No pending users to reject.")
-    }
-  })
-}
 
-// Call the new setup function after elements are rendered
-setupUserManagementListeners()
-\
-    } catch (error)
-{
-  console.error("Failed to fetch users:", error)
-  alert(`Failed to load user data: ${error.message}`)
-}
-\
+      // Call the new setup function after elements are rendered
+      setupUserManagementListeners()
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
+      alert(`Failed to load user data: ${error.message}`)
+    }
   }
 
   // Add this new function:
-  async
-function setupUserManagementListeners() {
-  const toggle = document.getElementById("auto-user-approval-toggle")
-  const toggleBg = toggle.nextElementSibling // The div with class toggle-bg
-  const toggleDot = toggleBg.firstElementChild // The div with class toggle-dot
-  const label = document.getElementById("approvalStatusLabel")
+  async function setupUserManagementListeners() {
+    const toggle = document.getElementById("auto-user-approval-toggle")
+    const toggleBg = toggle.nextElementSibling // The div with class toggle-bg
+    const toggleDot = toggleBg.firstElementChild // The div with class toggle-dot
+    const label = document.getElementById("approvalStatusLabel")
 
-  if (!toggle) return
+    if (!toggle) return
 
-  function updateLabelUI(checked) {
-    if (!label) return
+    function updateLabelUI(checked) {
+      if (!label) return
 
-    if (checked) {
-      label.textContent = "Auto-Approval is ON"
-      label.classList.remove("text-gray-500")
-      label.classList.add("text-green-600", "font-semibold")
-    } else {
-      label.textContent = "Auto-Approval is OFF"
-      label.classList.remove("text-green-600")
-      label.classList.add("text-gray-500")
+      if (checked) {
+        label.textContent = "Auto-Approval is ON"
+        label.classList.remove("text-gray-500")
+        label.classList.add("text-green-600", "font-semibold")
+      } else {
+        label.textContent = "Auto-Approval is OFF"
+        label.classList.remove("text-green-600")
+        label.classList.add("text-gray-500")
+      }
     }
-  }
 
-  // Load current setting
-  try {
-    const res = await fetchApi("/admin/settings", "GET", null, true)
-    const setting = res.find((s) => s.key === "auto_user_approval")
+    // Load current setting
+    try {
+      const res = await fetchApi("/admin/settings", "GET", null, true)
+      const setting = res.find((s) => s.key === "auto_user_approval")
 
-    if (setting) {
-      const isOn = setting.value === "true"
-      toggle.checked = isOn
-      if (isOn) {
+      if (setting) {
+        const isOn = setting.value === "true"
+        toggle.checked = isOn
+        if (isOn) {
+          toggleBg.classList.add("checked")
+          toggleDot.classList.add("checked")
+        } else {
+          toggleBg.classList.remove("checked")
+          toggleDot.classList.remove("checked")
+        }
+        updateLabelUI(isOn)
+      }
+    } catch (error) {
+      console.error("Failed to load auto approval setting:", error)
+    }
+
+    // Listen for toggle changes
+    toggle.addEventListener("change", async (e) => {
+      const newValue = e.target.checked.toString()
+      const checked = e.target.checked
+
+      if (checked) {
         toggleBg.classList.add("checked")
         toggleDot.classList.add("checked")
       } else {
         toggleBg.classList.remove("checked")
         toggleDot.classList.remove("checked")
       }
-      updateLabelUI(isOn)
-    }
-  } catch (error) {
-    console.error("Failed to load auto approval setting:", error)
+
+      try {
+        await fetchApi(
+          "/admin/settings",
+          "PUT",
+          {
+            key: "auto_user_approval",
+            value: newValue,
+            description: "Automatically approve new user registrations", // Keep description for consistency
+          },
+          true,
+        )
+
+        updateLabelUI(e.target.checked)
+        console.log(`Auto User Approval set to: ${newValue}`) // Changed from alert
+      } catch (error) {
+        alert(`Failed to update setting: ${error.message}`)
+        e.target.checked = !e.target.checked // Revert toggle state on error
+        if (e.target.checked) {
+          // Revert visual state
+          toggleBg.classList.add("checked")
+          toggleDot.classList.add("checked")
+        } else {
+          toggleBg.classList.remove("checked")
+          toggleDot.classList.remove("checked")
+        }
+        updateLabelUI(e.target.checked)
+      }
+    })
   }
 
-  // Listen for toggle changes
-  toggle.addEventListener("change", async (e) => {
-    const newValue = e.target.checked.toString()
-    const checked = e.target.checked
-
-    if (checked) {
-      toggleBg.classList.add("checked")
-      toggleDot.classList.add("checked")
-    } else {
-      toggleBg.classList.remove("checked")
-      toggleDot.classList.remove("checked")
-    }
-
+  async function updateUserStatus(userId, newStatus) {
     try {
-      await fetchApi(
-        "/admin/settings",
+      if (
+        newStatus === "rejected" &&
+        !confirm("Are you sure you want to reject and permanently delete this user? This action is irreversible.")
+      ) {
+        return // Stop if user cancels
+      }
+      await fetchApi(`/admin/users/${userId}/status`, "PUT", { status: newStatus }, true)
+      console.log(`User status updated to ${newStatus}.`) // Changed from alert
+      renderUserManagement() // Re-render table
+      renderDashboardOverview()
+    } catch (error) {
+      alert(`Failed to update user status: ${error.message}`)
+    }
+  }
+
+  async function promoteUserToAgent(userId, isAgent) {
+    try {
+      const data = await fetchApi(
+        `/admin/users/${userId}/agent`,
         "PUT",
-        {
-          key: "auto_user_approval",
-          value: newValue,
-          description: "Automatically approve new user registrations", // Keep description for consistency
-        },
+        { user_id: Number.parseInt(userId), is_agent: isAgent },
         true,
       )
-
-      updateLabelUI(e.target.checked)
-      console.log(`Auto User Approval set to: ${newValue}`) // Changed from alert
+      console.log(`Agent role ${isAgent ? "assigned" : "removed"}. Referral code: ${data.referral_code || "N/A"}`) // Changed from alert
+      renderUserManagement() // Re-render user table
+      renderAgentManagement() // Re-render agent table
     } catch (error) {
-      alert(`Failed to update setting: ${error.message}`)
-      e.target.checked = !e.target.checked // Revert toggle state on error
-      if (e.target.checked) {
-        // Revert visual state
-        toggleBg.classList.add("checked")
-        toggleDot.classList.add("checked")
-      } else {
-        toggleBg.classList.remove("checked")
-        toggleDot.classList.remove("checked")
+      alert(`Failed to update agent role: ${error.message}`)
+    }
+  }
+
+  // --- Agent Management ---
+  async function renderAgentManagement() {
+    if (!agentManagementTableBody) return
+    agentManagementTableBody.innerHTML = ""
+
+    const searchInput = document.getElementById("agent-search-input")
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : ""
+
+    try {
+      const allUsers = await fetchApi("/admin/users", "GET", null, true)
+      agents = allUsers.filter((user) => user.is_agent)
+
+      if (agents.length === 0) {
+        const row = agentManagementTableBody.insertRow()
+        row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No agents found.</td>`
+        return
       }
-      updateLabelUI(e.target.checked)
+
+      const filteredAgents = agents.filter(
+        (agent) =>
+          !searchTerm ||
+          agent.name.toLowerCase().includes(searchTerm) ||
+          agent.email.toLowerCase().includes(searchTerm) ||
+          agent.id.toString().includes(searchTerm) ||
+          (agent.referral_code && agent.referral_code.toLowerCase().includes(searchTerm)),
+      )
+
+      filteredAgents.forEach((agent) => {
+        const row = agentManagementTableBody.insertRow()
+        row.innerHTML = `
+              <td class="table-row-data">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  ID: ${agent.id}
+                </span>
+              </td>
+              <td class="table-row-data font-medium text-gray-900">${agent.name}</td>
+              <td class="table-row-data">${agent.referral_code || "N/A"}</td>
+              <td class="table-row-data text-sm text-gray-500">${agent.agent_appointed_at ? new Date(agent.agent_appointed_at).toLocaleDateString() : "N/A"}</td>
+              <td class="table-row-data">${agent.referred_users_count || 0}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button id="demote-agent-${agent.id}" class="action-btn demote-agent-btn text-red-600 hover:text-red-900">Demote Agent</button>
+              </td>
+          `
+      })
+
+      document.querySelectorAll(".demote-agent-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const agentId = e.target.id.replace("demote-agent-", "")
+          promoteUserToAgent(agentId, false) // Use the same promote/demote function
+        })
+      })
+    } catch (error) {
+      console.error("Failed to fetch agents:", error)
+      alert(`Failed to load agent data: ${error.message}`)
     }
-  })
-}
-
-async function updateUserStatus(userId, newStatus) {
-  try {
-    if (
-      newStatus === "rejected" &&
-      !confirm("Are you sure you want to reject and permanently delete this user? This action is irreversible.")
-    ) {
-      return // Stop if user cancels
-    }
-    await fetchApi(`/admin/users/${userId}/status`, "PUT", { status: newStatus }, true)
-    console.log(`User status updated to ${newStatus}.`) // Changed from alert
-    renderUserManagement() // Re-render table
-    renderDashboardOverview()
-  } catch (error) {
-    alert(`Failed to update user status: ${error.message}`)
   }
-}
 
-async function promoteUserToAgent(userId, isAgent) {
-  try {
-    const data = await fetchApi(
-      `/admin/users/${userId}/agent`,
-      "PUT",
-      { user_id: Number.parseInt(userId), is_agent: isAgent },
-      true,
-    )
-    console.log(`Agent role ${isAgent ? "assigned" : "removed"}. Referral code: ${data.referral_code || "N/A"}`) // Changed from alert
-    renderUserManagement() // Re-render user table
-    renderAgentManagement() // Re-render agent table
-  } catch (error) {
-    alert(`Failed to update agent role: ${error.message}`)
-  }
-}
+  // --- Survey Management ---
+  async function renderSurveyManagement() {
+    const surveyManagementTableBody = document.getElementById("survey-management-table-body") // Corrected ID
+    if (!surveyManagementTableBody) return
 
-// --- Agent Management ---
-// async function renderAgentManagement() {
-//   if (!agentManagementTableBody) return
-//   agentManagementTableBody.innerHTML = ""
-//   try {
-//     const allUsers = await fetchApi("/admin/users", "GET", null, true)
-//     agents = allUsers.filter((user) => user.is_agent) // Filter agents from all users
-
-//     if (agents.length === 0) {
-//       const row = agentManagementTableBody.insertRow()
-//       row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No agents found.</td>`
-//       return;
-//     }
-
-//     agents.forEach((agent) => {
-//       const row = agentManagementTableBody.insertRow()
-//       row.innerHTML = `
-//             <td class="table-row-data font-medium text-gray-900">${agent.name}</td>
-//             <td class="table-row-data">${agent.referral_code || "N/A"}</td>
-//             <td class="table-row-data">${agent.referred_users_count || 0}</td>
-//             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-//                 <button id="demote-agent-${agent.id}" class="action-btn demote-agent-btn text-red-600 hover:text-red-900">Demote Agent</button>
-//             </td>
-//         `
-//     })
-
-//     document.querySelectorAll(".demote-agent-btn").forEach((button) => {
-//       button.addEventListener("click", (e) => {
-//         const agentId = e.target.id.replace("demote-agent-", "")
-//         promoteUserToAgent(agentId, false) // Use the same promote/demote function
-//       })
-//     })
-//   } catch (error) {
-//     console.error("Failed to fetch agents:", error)
-//     alert(`Failed to load agent data: ${error.message}`)
-//   }
-// }
-
-// --- Survey Management ---
-async function renderSurveyManagement() {
-  const surveyManagementTableBody = document.getElementById("survey-management-table-body") // Corrected ID
-  if (!surveyManagementTableBody) return
-
-  surveyManagementTableBody.innerHTML = `
+    surveyManagementTableBody.innerHTML = `
       <tr>
         <td colspan="3" class="px-6 py-4 text-center text-lg text-gray-600">
           Survey Management is temporarily closed for maintenance. Please check back later.
         </td>
       </tr>
     `
-  // No API calls or further rendering logic here, as it's temporarily closed.
-}
+    // No API calls or further rendering logic here, as it's temporarily closed.
+  }
 
-// --- Point Transfers ---
-let currentPage = 1
-const pageSize = 5
-let fullTransferList = []
+  // --- Point Transfers ---
+  let currentPage = 1
+  const pageSize = 5
+  let fullTransferList = []
 
-// Exposed globally for onclick in HTML
-window.renderPointTransfers = async () => {
-  const tbody = document.getElementById("pointTransfersTableBody")
-  const startDateInput = document.getElementById("filterStartDate")
-  const endDateInput = document.getElementById("filterEndDate")
-  const searchEmailInput = document.getElementById("searchEmail")
+  // Exposed globally for onclick in HTML
+  window.renderPointTransfers = async () => {
+    const tbody = document.getElementById("pointTransfersTableBody")
+    const startDateInput = document.getElementById("filterStartDate")
+    const endDateInput = document.getElementById("filterEndDate")
+    const searchEmailInput = document.getElementById("searchEmail")
 
-  const startDate = startDateInput.value
-  const endDate = endDateInput.value
-  const searchEmail = searchEmailInput.value.toLowerCase()
+    const startDate = startDateInput.value
+    const endDate = endDateInput.value
+    const searchEmail = searchEmailInput.value.toLowerCase()
 
-  tbody.innerHTML = ""
+    tbody.innerHTML = ""
 
-  try {
-    let endpoint = `/admin/point-transfers?skip=0&limit=1000` // Fetch all to filter client-side
-    if (startDate) endpoint += `&date=${startDate}` // Backend can filter by day
-    if (searchEmail) endpoint += `&email=${searchEmail}` // Backend can filter by email
+    try {
+      let endpoint = `/admin/point-transfers?skip=0&limit=1000` // Fetch all to filter client-side
+      if (startDate) endpoint += `&date=${startDate}` // Backend can filter by day
+      if (searchEmail) endpoint += `&email=${searchEmail}` // Backend can filter by email
 
-    // Fetch all transfers from backend first, then apply client-side date range if necessary
-    const transfers = await fetchApi(endpoint, "GET", null, true)
+      // Fetch all transfers from backend first, then apply client-side date range if necessary
+      const transfers = await fetchApi(endpoint, "GET", null, true)
 
-    fullTransferList = transfers.filter((t) => {
-      const createdAt = new Date(t.created_at)
-      const fromEmail = t.from_user?.email?.toLowerCase() || ""
-      const toEmail = t.to_user?.email?.toLowerCase() || ""
+      fullTransferList = transfers.filter((t) => {
+        const createdAt = new Date(t.created_at)
+        const fromEmail = t.from_user?.email?.toLowerCase() || ""
+        const toEmail = t.to_user?.email?.toLowerCase() || ""
 
-      const matchEmail = !searchEmail || fromEmail.includes(searchEmail) || toEmail.includes(searchEmail)
+        const matchEmail = !searchEmail || fromEmail.includes(searchEmail) || toEmail.includes(searchEmail)
 
-      // Adjust date filtering for full range if backend only filters by day
-      const filterStartDateObj = startDate ? new Date(startDate + "T00:00:00") : null
-      const filterEndDateObj = endDate ? new Date(endDate + "T23:59:59") : null
+        // Adjust date filtering for full range if backend only filters by day
+        const filterStartDateObj = startDate ? new Date(startDate + "T00:00:00") : null
+        const filterEndDateObj = endDate ? new Date(endDate + "T23:59:59") : null
 
-      const matchDate =
-        (!filterStartDateObj || createdAt >= filterStartDateObj) && (!filterEndDateObj || createdAt <= filterEndDateObj)
+        const matchDate =
+          (!filterStartDateObj || createdAt >= filterStartDateObj) &&
+          (!filterEndDateObj || createdAt <= filterEndDateObj)
 
-      return matchEmail && matchDate
-    })
+        return matchEmail && matchDate
+      })
 
-    currentPage = 1 // Reset to first page after new filter
-    const start = (currentPage - 1) * pageSize
-    const paginatedTransfers = fullTransferList.slice(start, start + pageSize)
+      currentPage = 1 // Reset to first page after new filter
+      const start = (currentPage - 1) * pageSize
+      const paginatedTransfers = fullTransferList.slice(start, start + pageSize)
 
-    // Render table
-    if (paginatedTransfers.length === 0) {
-      const row = tbody.insertRow()
-      row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No point transfers found.</td>`
-    } else {
-      paginatedTransfers.forEach((t) => {
+      // Render table
+      if (paginatedTransfers.length === 0) {
         const row = tbody.insertRow()
-        row.innerHTML = `
+        row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No point transfers found.</td>`
+      } else {
+        paginatedTransfers.forEach((t) => {
+          const row = tbody.insertRow()
+          row.innerHTML = `
             <td class="table-row-data font-medium text-gray-900">${t.from_user?.email || "N/A"}</td>
             <td class="table-row-data">${t.to_user?.email || "N/A"}</td>
             <td class="table-row-data">${t.amount}</td>
             <td class="table-row-data">${new Date(t.created_at).toLocaleString()}</td>
             <td class="px-6 py-4 text-right text-sm font-medium"></td>
           `
+        })
+      }
+
+      updatePaginationDisplay()
+    } catch (err) {
+      console.error("Failed to fetch transfers:", err)
+      alert("Error loading transfers.")
+    }
+  }
+
+  function updatePaginationDisplay() {
+    const total = fullTransferList.length
+    const totalPages = Math.max(1, Math.ceil(total / pageSize))
+    const info = document.getElementById("paginationInfo")
+    info.textContent = `Page ${currentPage} of ${totalPages}`
+
+    const prevBtn = document.querySelector('button[onclick="window.prevPage()"]')
+    const nextBtn = document.querySelector('button[onclick="window.nextPage()"]')
+
+    if (prevBtn) prevBtn.disabled = currentPage === 1
+    if (nextBtn) nextBtn.disabled = currentPage === totalPages
+  }
+
+  // Exposed globally for onclick in HTML
+  window.nextPage = () => {
+    const totalPages = Math.ceil(fullTransferList.length / pageSize)
+    if (currentPage < totalPages) {
+      currentPage++
+      window.renderPointTransfers()
+    }
+  }
+
+  // Exposed globally for onclick in HTML
+  window.prevPage = () => {
+    if (currentPage > 1) {
+      currentPage--
+      window.renderPointTransfers()
+    }
+  }
+
+  // --- Redemption Requests ---
+
+  async function renderRedemptionRequests() {
+    if (!redemptionRequestsTableBody) return
+    redemptionRequestsTableBody.innerHTML = ""
+
+    try {
+      const redemptionRequests = await fetchApi("/admin/redemptions", "GET", null, true) // Admin endpoint
+
+      if (redemptionRequests.length === 0) {
+        const row = redemptionRequestsTableBody.insertRow()
+        row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No redemption requests found.</td>`
+        return
+      }
+
+      // Sort so pending requests are on top
+      redemptionRequests.sort((a, b) => {
+        if (a.status === "pending" && b.status !== "pending") return -1
+        if (a.status !== "pending" && b.status === "pending") return 1
+        return 0
       })
-    }
 
-    updatePaginationDisplay()
-  } catch (err) {
-    console.error("Failed to fetch transfers:", err)
-    alert("Error loading transfers.")
-  }
-}
+      redemptionRequests.forEach((request) => {
+        // Determine destination based on type
+        const destination = request.destination || ""
 
-function updatePaginationDisplay() {
-  const total = fullTransferList.length
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
-  const info = document.getElementById("paginationInfo")
-  info.textContent = `Page ${currentPage} of ${totalPages}`
-
-  const prevBtn = document.querySelector('button[onclick="window.prevPage()"]')
-  const nextBtn = document.querySelector('button[onclick="window.nextPage()"]')
-
-  if (prevBtn) prevBtn.disabled = currentPage === 1
-  if (nextBtn) nextBtn.disabled = currentPage === totalPages
-}
-
-// Exposed globally for onclick in HTML
-window.nextPage = () => {
-  const totalPages = Math.ceil(fullTransferList.length / pageSize)
-  if (currentPage < totalPages) {
-    currentPage++
-    window.renderPointTransfers()
-  }
-}
-
-// Exposed globally for onclick in HTML
-window.prevPage = () => {
-  if (currentPage > 1) {
-    currentPage--
-    window.renderPointTransfers()
-  }
-}
-
-// --- Redemption Requests ---
-
-async function renderRedemptionRequests() {
-  if (!redemptionRequestsTableBody) return
-  redemptionRequestsTableBody.innerHTML = ""
-
-  try {
-    const redemptionRequests = await fetchApi("/admin/redemptions", "GET", null, true) // Admin endpoint
-
-    if (redemptionRequests.length === 0) {
-      const row = redemptionRequestsTableBody.insertRow()
-      row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No redemption requests found.</td>`
-      return
-    }
-
-    // Sort so pending requests are on top
-    redemptionRequests.sort((a, b) => {
-      if (a.status === "pending" && b.status !== "pending") return -1
-      if (a.status !== "pending" && b.status === "pending") return 1
-      return 0
-    })
-
-    redemptionRequests.forEach((request) => {
-      // Determine destination based on type
-      const destination = request.destination || ""
-
-      const row = redemptionRequestsTableBody.insertRow()
-      row.innerHTML = `
+        const row = redemptionRequestsTableBody.insertRow()
+        row.innerHTML = `
           <td class="table-row-data font-medium text-gray-900">${request.user_email || request.user_id}</td>
           <td class="table-row-data">${request.points_amount}</td>
           <td class="table-row-data">${request.type}</td>
@@ -967,152 +963,152 @@ async function renderRedemptionRequests() {
             }
           </td>
         `
-    })
-
-    // Attach event listeners for approve/reject buttons
-    document.querySelectorAll(".approve-redemption-btn").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        const requestId = e.target.id.replace("approve-redemption-", "")
-        updateRedemptionStatus(requestId, "approve") // Backend expects 'approve' or 'reject'
       })
-    })
 
-    document.querySelectorAll(".reject-redemption-btn").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        const requestId = e.target.id.replace("reject-redemption-", "")
-        updateRedemptionStatus(requestId, "reject") // Backend expects 'approve' or 'reject'
+      // Attach event listeners for approve/reject buttons
+      document.querySelectorAll(".approve-redemption-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const requestId = e.target.id.replace("approve-redemption-", "")
+          updateRedemptionStatus(requestId, "approve") // Backend expects 'approve' or 'reject'
+        })
       })
-    })
-  } catch (error) {
-    console.error("Failed to fetch redemption requests:", error)
-    alert(`Failed to load redemption requests: ${error.message}`)
+
+      document.querySelectorAll(".reject-redemption-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const requestId = e.target.id.replace("reject-redemption-", "")
+          updateRedemptionStatus(requestId, "reject") // Backend expects 'approve' or 'reject'
+        })
+      })
+    } catch (error) {
+      console.error("Failed to fetch redemption requests:", error)
+      alert(`Failed to load redemption requests: ${error.message}`)
+    }
   }
-}
 
-async function updateRedemptionStatus(requestId, action) {
-  try {
-    await fetchApi(`/admin/redemptions/${requestId}/process?action=${action}`, "PUT", null, true)
-    console.log(`Redemption request ${requestId} status updated to ${action}.`) // Changed from alert
-    renderRedemptionRequests()
-    renderDashboardOverview()
-  } catch (error) {
-    alert(`Failed to update redemption status: ${error.message}`)
+  async function updateRedemptionStatus(requestId, action) {
+    try {
+      await fetchApi(`/admin/redemptions/${requestId}/process?action=${action}`, "PUT", null, true)
+      console.log(`Redemption request ${requestId} status updated to ${action}.`) // Changed from alert
+      renderRedemptionRequests()
+      renderDashboardOverview()
+    } catch (error) {
+      alert(`Failed to update redemption status: ${error.message}`)
+    }
   }
-}
 
-// --- Table Sorting Logic ---
-function setupTableSorting() {
-  document.querySelectorAll(".sortable-header").forEach((header) => {
-    header.addEventListener("click", () => {
-      const table = header.closest("table")
-      const tbody = table.querySelector("tbody")
-      const rows = Array.from(tbody.querySelectorAll("tr"))
-      const sortBy = header.dataset.sortBy
-      const isAsc = header.classList.contains("asc")
+  // --- Table Sorting Logic ---
+  function setupTableSorting() {
+    document.querySelectorAll(".sortable-header").forEach((header) => {
+      header.addEventListener("click", () => {
+        const table = header.closest("table")
+        const tbody = table.querySelector("tbody")
+        const rows = Array.from(tbody.querySelectorAll("tr"))
+        const sortBy = header.dataset.sortBy
+        const isAsc = header.classList.contains("asc")
 
-      table.querySelectorAll(".sortable-header").forEach((h) => {
-        h.classList.remove("asc", "desc")
+        table.querySelectorAll(".sortable-header").forEach((h) => {
+          h.classList.remove("asc", "desc")
+        })
+
+        const newIsAsc = !isAsc
+        header.classList.add(newIsAsc ? "asc" : "desc")
+
+        rows.sort((a, b) => {
+          const aText = a
+            .querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`)
+            .textContent.trim()
+          const bText = b
+            .querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`)
+            .textContent.trim()
+
+          let valA = aText
+          let valB = bText
+
+          if (
+            !isNaN(Number.parseFloat(aText)) &&
+            isFinite(aText) &&
+            !isNaN(Number.parseFloat(bText)) &&
+            isFinite(bText)
+          ) {
+            valA = Number.parseFloat(aText)
+            valB = Number.parseFloat(bText)
+          } else if (sortBy === "timestamp") {
+            valA = new Date(aText).getTime()
+            valB = new Date(bText).getTime()
+          }
+
+          if (valA < valB) {
+            return newIsAsc ? -1 : 1
+          }
+          if (valA > valB) {
+            return newIsAsc ? 1 : -1
+          }
+          return 0
+        })
+
+        rows.forEach((row) => tbody.appendChild(row))
       })
-
-      const newIsAsc = !isAsc
-      header.classList.add(newIsAsc ? "asc" : "desc")
-
-      rows.sort((a, b) => {
-        const aText = a
-          .querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`)
-          .textContent.trim()
-        const bText = b
-          .querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`)
-          .textContent.trim()
-
-        let valA = aText
-        let valB = bText
-
-        if (
-          !isNaN(Number.parseFloat(aText)) &&
-          isFinite(aText) &&
-          !isNaN(Number.parseFloat(bText)) &&
-          isFinite(bText)
-        ) {
-          valA = Number.parseFloat(aText)
-          valB = Number.parseFloat(bText)
-        } else if (sortBy === "timestamp") {
-          valA = new Date(aText).getTime()
-          valB = new Date(bText).getTime()
-        }
-
-        if (valA < valB) {
-          return newIsAsc ? -1 : 1
-        }
-        if (valA > valB) {
-          return newIsAsc ? 1 : -1
-        }
-        return 0
-      })
-
-      rows.forEach((row) => tbody.appendChild(row))
     })
-  })
-}
+  }
 
-// --- Send Points Form Logic ---
-function setupSendPointsForm() {
-  const sendPointsForm = document.getElementById("send-points-form")
-  if (!sendPointsForm) return
+  // --- Send Points Form Logic ---
+  function setupSendPointsForm() {
+    const sendPointsForm = document.getElementById("send-points-form")
+    if (!sendPointsForm) return
 
-  sendPointsForm.addEventListener("submit", async (e) => {
-    e.preventDefault()
-    const fromUserEmailInput = document.getElementById("from-user-email")
-    const toUserEmailInput = document.getElementById("to-user-email")
-    const pointsAmountInput = document.getElementById("points-amount")
+    sendPointsForm.addEventListener("submit", async (e) => {
+      e.preventDefault()
+      const fromUserEmailInput = document.getElementById("from-user-email")
+      const toUserEmailInput = document.getElementById("to-user-email")
+      const pointsAmountInput = document.getElementById("points-amount")
 
-    const fromUserEmail = fromUserEmailInput ? fromUserEmailInput.value.trim() : null
-    const toUserEmail = toUserEmailInput.value.trim()
-    const pointsAmount = Number.parseInt(pointsAmountInput.value, 10)
+      const fromUserEmail = fromUserEmailInput ? fromUserEmailInput.value.trim() : null
+      const toUserEmail = toUserEmailInput.value.trim()
+      const pointsAmount = Number.parseInt(pointsAmountInput.value, 10)
 
-    if (!toUserEmail || isNaN(pointsAmount) || pointsAmount <= 0) {
-      alert("Please provide a valid receiver email and a positive amount of points.")
-      return
-    }
+      if (!toUserEmail || isNaN(pointsAmount) || pointsAmount <= 0) {
+        alert("Please provide a valid receiver email and a positive amount of points.")
+        return
+      }
 
-    const payload = {
-      to_user_email: toUserEmail,
-      points_amount: pointsAmount,
-    }
+      const payload = {
+        to_user_email: toUserEmail,
+        points_amount: pointsAmount,
+      }
 
-    if (fromUserEmail) {
-      payload.from_user_email = fromUserEmail
-    }
+      if (fromUserEmail) {
+        payload.from_user_email = fromUserEmail
+      }
+
+      try {
+        await fetchApi("/admin/point-transfers", "POST", payload, true)
+        console.log("Points sent successfully.") // Changed from alert
+        sendPointsForm.reset() // Clear the form
+        window.renderPointTransfers() // Re-render transfers table
+        renderDashboardOverview() // Update dashboard stats
+      } catch (error) {
+        alert(`Failed to send points: ${error.message}`)
+      }
+    })
+  }
+
+  // --- Fraud Management (Flags) ---
+  async function renderFraudManagement() {
+    if (!fraudFlagsTableBody) return
+    fraudFlagsTableBody.innerHTML = ""
 
     try {
-      await fetchApi("/admin/point-transfers", "POST", payload, true)
-      console.log("Points sent successfully.") // Changed from alert
-      sendPointsForm.reset() // Clear the form
-      window.renderPointTransfers() // Re-render transfers table
-      renderDashboardOverview() // Update dashboard stats
-    } catch (error) {
-      alert(`Failed to send points: ${error.message}`)
-    }
-  })
-}
+      const fraudFlags = await fetchApi("/admin/fraud-flags", "GET", null, true)
 
-// --- Fraud Management (Flags) ---
-async function renderFraudManagement() {
-  if (!fraudFlagsTableBody) return
-  fraudFlagsTableBody.innerHTML = ""
+      if (fraudFlags.length === 0) {
+        const row = fraudFlagsTableBody.insertRow()
+        row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No fraud flags found.</td>`
+        return
+      }
 
-  try {
-    const fraudFlags = await fetchApi("/admin/fraud-flags", "GET", null, true)
-
-    if (fraudFlags.length === 0) {
-      const row = fraudFlagsTableBody.insertRow()
-      row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No fraud flags found.</td>`
-      return
-    }
-
-    fraudFlags.forEach((flag) => {
-      const row = fraudFlagsTableBody.insertRow()
-      row.innerHTML = `
+      fraudFlags.forEach((flag) => {
+        const row = fraudFlagsTableBody.insertRow()
+        row.innerHTML = `
           <td class="table-row-data font-medium text-gray-900">${flag.user.email}</td>
           <td class="table-row-data">${flag.reason}</td>
           <td class="table-row-data">${new Date(flag.created_at).toLocaleString()}</td>
@@ -1120,57 +1116,59 @@ async function renderFraudManagement() {
             <button id="clear-flag-${flag.user.id}" class="action-btn clear-fraud-flag-btn text-red-600 hover:text-red-900">Clear Flag</button>
           </td>
         `
-    })
-
-    document.querySelectorAll(".clear-fraud-flag-btn").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        const userId = e.target.id.replace("clear-flag-", "")
-        clearFraudFlag(userId)
       })
-    })
-  } catch (error) {
-    console.error("Failed to fetch fraud flags:", error)
-    alert(`Failed to load fraud flags: ${error.message}`)
+
+      document.querySelectorAll(".clear-fraud-flag-btn").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          const userId = e.target.id.replace("clear-flag-", "")
+          clearFraudFlag(userId)
+        })
+      })
+    } catch (error) {
+      console.error("Failed to fetch fraud flags:", error)
+      alert(`Failed to load fraud flags: ${error.message}`)
+    }
   }
-}
 
-async function clearFraudFlag(userId) {
-  if (!confirm("Are you sure you want to clear this fraud flag? This will also reset device tracking for this user.")) {
-    return
-  }
-  try {
-    await fetchApi(`/admin/fraud-flags/${userId}`, "DELETE", null, true)
-    console.log(`Fraud flag for user ID ${userId} cleared successfully.`) // Changed from alert
-    renderFraudManagement() // Re-render the flags table
-    renderUserManagement() // Re-render user table to reflect is_flagged status change
-  } catch (error) {
-    alert(`Failed to clear fraud flag: ${error.message}`)
-  }
-}
-
-// --- Fraud Management (Rules) ---
-async function renderFraudRules() {
-  if (!fraudRulesTableBody) return
-  fraudRulesTableBody.innerHTML = ""
-
-  try {
-    const fraudRules = await fetchApi("/admin/fraud/rules", "GET", null, true)
-
-    if (fraudRules.length === 0) {
-      const row = fraudRulesTableBody.insertRow()
-      row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No fraud rules found.</td>`
+  async function clearFraudFlag(userId) {
+    if (
+      !confirm("Are you sure you want to clear this fraud flag? This will also reset device tracking for this user.")
+    ) {
       return
     }
+    try {
+      await fetchApi(`/admin/fraud-flags/${userId}`, "DELETE", null, true)
+      console.log(`Fraud flag for user ID ${userId} cleared successfully.`) // Changed from alert
+      renderFraudManagement() // Re-render the flags table
+      renderUserManagement() // Re-render user table to reflect is_flagged status change
+    } catch (error) {
+      alert(`Failed to clear fraud flag: ${error.message}`)
+    }
+  }
 
-    fraudRules.forEach((rule) => {
-      // Add defensive checks for rule and rule.rule_key
-      if (!rule || typeof rule.rule_key === "undefined" || rule.rule_key === null) {
-        console.warn("Skipping malformed fraud rule:", rule)
+  // --- Fraud Management (Rules) ---
+  async function renderFraudRules() {
+    if (!fraudRulesTableBody) return
+    fraudRulesTableBody.innerHTML = ""
+
+    try {
+      const fraudRules = await fetchApi("/admin/fraud/rules", "GET", null, true)
+
+      if (fraudRules.length === 0) {
+        const row = fraudRulesTableBody.insertRow()
+        row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No fraud rules found.</td>`
         return
       }
 
-      const row = fraudRulesTableBody.insertRow()
-      row.innerHTML = `
+      fraudRules.forEach((rule) => {
+        // Add defensive checks for rule and rule.rule_key
+        if (!rule || typeof rule.rule_key === "undefined" || rule.rule_key === null) {
+          console.warn("Skipping malformed fraud rule:", rule)
+          return
+        }
+
+        const row = fraudRulesTableBody.insertRow()
+        row.innerHTML = `
           <td class="table-row-data font-medium text-gray-900">${rule.rule_key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
           <td class="table-row-data">${rule.description || "N/A"}</td>
           <td class="table-row-data">
@@ -1188,83 +1186,82 @@ async function renderFraudRules() {
             <button class="btn btn-primary save-fraud-rule-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md" data-rule-key="${rule.rule_key}">Save</button>
           </td>
         `
-      fraudRulesTableBody.appendChild(row)
-    })
-
-    document.querySelectorAll(".save-fraud-rule-btn").forEach((button) => {
-      button.addEventListener("click", async (e) => {
-        const ruleKey = e.target.dataset.ruleKey
-        const row = e.target.closest("tr")
-        const limitValue = Number.parseInt(row.querySelector(".fraud-rule-limit").value, 10)
-        const action = row.querySelector(".fraud-rule-action").value
-
-        if (isNaN(limitValue) || limitValue < 1) {
-          alert("Limit value must be a positive number.")
-          return
-        }
-
-        try {
-          // Only send limit_value and action, as rule_key is in the path
-          await fetchApi(`/admin/fraud/rules/${ruleKey}`, "POST", { limit_value: limitValue, action: action }, true)
-          console.log(`Fraud rule "${ruleKey}" updated successfully.`) // Changed from alert
-          renderFraudRules() // Re-render to show updated values
-        } catch (error) {
-          console.error("Error updating fraud rule:", error)
-          alert(`Failed to update fraud rule "${ruleKey}": ${error.message}`)
-        }
+        fraudRulesTableBody.appendChild(row)
       })
-    })
-  } catch (error) {
-    console.error("Failed to fetch fraud rules:", error)
-    alert(`Failed to load fraud rules: ${error.message}`)
-  }
-}
 
-// --- Global Event Listener for all pages ---
-document.addEventListener("DOMContentLoaded", () => {
-  protectRoute() // Run protection on every page load
+      document.querySelectorAll(".save-fraud-rule-btn").forEach((button) => {
+        button.addEventListener("click", async (e) => {
+          const ruleKey = e.target.dataset.ruleKey
+          const row = e.target.closest("tr")
+          const limitValue = Number.parseInt(row.querySelector(".fraud-rule-limit").value, 10)
+          const action = row.querySelector(".fraud-rule-action").value
 
-  // Initialize specific page logic based on current URL
-  const currentPath = window.location.pathname
+          if (isNaN(limitValue) || limitValue < 1) {
+            alert("Limit value must be a positive number.")
+            return
+          }
 
-  if (currentPath === "/" || currentPath.includes("index.html")) {
-    // Covers root index.html (login)
-    handleLoginForm()
-  } else if (currentPath.includes("/pin/")) {
-    // Covers /pin/index.html
-    handlePinForm()
-  } else if (currentPath.includes("/dashboard/")) {
-    initializeDashboardElements()
-    setupSidebarAndNav()
-    setupSendPointsForm()
-    setupTableSorting()
-
-    // Determine initial section based on URL hash or default
-    const initialHash = window.location.hash.substring(1)
-    const initialSectionId = initialHash || "dashboard-overview-section"
-
-    // Set initial active link and section
-    const initialLink = document.getElementById(initialSectionId.replace("-section", "-link"))
-    if (initialLink) {
-      initialLink.classList.add("bg-gray-700", "text-white")
-    }
-    const initialSection = document.getElementById(initialSectionId)
-    if (initialSection) {
-      initialSection.classList.add("active")
-    }
-
-    // Initial render for the determined section on page load/refresh
-    renderSectionContent(initialSectionId) // THIS IS THE KEY CHANGE FOR REFRESH
-
-    // Logout button functionality
-    if (logoutButton) {
-      logoutButton.addEventListener("click", () => {
-        console.log("Logging out...") // Changed from alert
-        clearSession()
-        window.location.href = "/" // Redirect to root login page
+          try {
+            // Only send limit_value and action, as rule_key is in the path
+            await fetchApi(`/admin/fraud/rules/${ruleKey}`, "POST", { limit_value: limitValue, action: action }, true)
+            console.log(`Fraud rule "${ruleKey}" updated successfully.`) // Changed from alert
+            renderFraudRules() // Re-render to show updated values
+          } catch (error) {
+            console.error("Error updating fraud rule:", error)
+            alert(`Failed to update fraud rule "${ruleKey}": ${error.message}`)
+          }
+        })
       })
+    } catch (error) {
+      console.error("Failed to fetch fraud rules:", error)
+      alert(`Failed to load fraud rules: ${error.message}`)
     }
   }
-})
-\
+
+  // --- Global Event Listener for all pages ---
+  document.addEventListener("DOMContentLoaded", () => {
+    protectRoute() // Run protection on every page load
+
+    // Initialize specific page logic based on current URL
+    const currentPath = window.location.pathname
+
+    if (currentPath === "/" || currentPath.includes("index.html")) {
+      // Covers root index.html (login)
+      handleLoginForm()
+    } else if (currentPath.includes("/pin/")) {
+      // Covers /pin/index.html
+      handlePinForm()
+    } else if (currentPath.includes("/dashboard/")) {
+      initializeDashboardElements()
+      setupSidebarAndNav()
+      setupSendPointsForm()
+      setupTableSorting()
+
+      // Determine initial section based on URL hash or default
+      const initialHash = window.location.hash.substring(1)
+      const initialSectionId = initialHash || "dashboard-overview-section"
+
+      // Set initial active link and section
+      const initialLink = document.getElementById(initialSectionId.replace("-section", "-link"))
+      if (initialLink) {
+        initialLink.classList.add("bg-gray-700", "text-white")
+      }
+      const initialSection = document.getElementById(initialSectionId)
+      if (initialSection) {
+        initialSection.classList.add("active")
+      }
+
+      // Initial render for the determined section on page load/refresh
+      renderSectionContent(initialSectionId) // THIS IS THE KEY CHANGE FOR REFRESH
+
+      // Logout button functionality
+      if (logoutButton) {
+        logoutButton.addEventListener("click", () => {
+          console.log("Logging out...") // Changed from alert
+          clearSession()
+          window.location.href = "/" // Redirect to root login page
+        })
+      }
+    }
+  })
 })()
