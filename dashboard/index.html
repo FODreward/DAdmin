@@ -4,15 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard</title>
-    <link href="styles.css" rel="stylesheet" />
+    <link href="/styles.css" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body class="flex h-screen">
-    <!-- Mobile Overlay -->
-    <div id="mobile-overlay" class="mobile-overlay"></div>
-    
-    <!-- Sidebar -->
+     Sidebar 
     <aside id="sidebar" class="sidebar">
       <div class="p-4 border-b border-gray-700 flex items-center">
         <h1 class="text-2xl font-bold sidebar-header-text">Admin Panel</h1>
@@ -251,14 +247,14 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
+     Main Content 
     <main id="main-content" class="main-content">
       <header class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-semibold text-gray-800">Admin Dashboard</h1>
         <div class="text-gray-600">Welcome, Admin!</div>
       </header>
 
-      <!-- Dashboard Overview Section -->
+       Dashboard Overview Section 
       <section id="dashboard-overview-section" class="section-content active">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div class="card">
@@ -336,14 +332,14 @@
                 id="activity-log-table-body"
                 class="bg-white divide-y divide-gray-200"
               >
-                <!-- Activity logs will be loaded here by JavaScript -->
+                 Activity logs will be loaded here by JavaScript 
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- System Settings Section -->
+       System Settings Section 
       <section id="system-settings-section" class="section-content">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           System Settings
@@ -362,34 +358,22 @@
                 id="system-settings-table-body"
                 class="bg-white divide-y divide-gray-200"
               >
-                <!-- Settings will be loaded here by JavaScript -->
+                 Settings will be loaded here by JavaScript 
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- User Management Section -->
+       User Management Section 
       <section id="user-management-section" class="section-content">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           User Management
         </h2>
         <div class="card mb-8">
-          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
+          <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-gray-700">User List</h3>
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <!-- Added search functionality for users -->
-              <div class="search-container">
-                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                <input
-                  type="text"
-                  id="user-search-input"
-                  class="search-input"
-                  placeholder="Search by email or user ID..."
-                />
-              </div>
+            <div class="flex items-center space-x-4">
               <label class="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
@@ -408,13 +392,13 @@
               </label>
               <button
                 id="approve-all-pending-users-btn"
-                class="btn-success"
+                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm"
               >
                 Approve All Pending
               </button>
               <button
                 id="reject-all-pending-users-btn"
-                class="btn-danger"
+                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm"
               >
                 Reject All Pending
               </button>
@@ -436,7 +420,7 @@
                     class="table-header sortable-header"
                     data-sort-by="email"
                   >
-                    Email & ID
+                    Email
                   </th>
                   <th
                     scope="col"
@@ -452,13 +436,6 @@
                   >
                     Role
                   </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="created_at"
-                  >
-                    Join Date
-                  </th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Actions</span>
                   </th>
@@ -468,34 +445,20 @@
                 id="user-management-table-body"
                 class="bg-white divide-y divide-gray-200"
               >
-                <!-- User data will be loaded here by JavaScript -->
+                 User data will be loaded here by JavaScript 
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- Agent Management Section -->
+       Agent Management Section 
       <section id="agent-management-section" class="section-content">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           Agent Management
         </h2>
         <div class="card mb-8">
-          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
-            <h3 class="text-lg font-medium text-gray-700">Agent List</h3>
-            <!-- Added search functionality for agents -->
-            <div class="search-container">
-              <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
-              <input
-                type="text"
-                id="agent-search-input"
-                class="search-input"
-                placeholder="Search by email or agent ID..."
-              />
-            </div>
-          </div>
+          <h3 class="text-lg font-medium text-gray-700 mb-4">Agent List</h3>
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
@@ -506,13 +469,6 @@
                     data-sort-by="name"
                   >
                     Name
-                  </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="email"
-                  >
-                    Email & ID
                   </th>
                   <th
                     scope="col"
@@ -528,13 +484,6 @@
                   >
                     Referred Users
                   </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="appointed_at"
-                  >
-                    Appointed Date
-                  </th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Actions</span>
                   </th>
@@ -544,15 +493,14 @@
                 id="agent-management-table-body"
                 class="bg-white divide-y divide-gray-200"
               >
-                <!-- Agent data will be loaded here by JavaScript -->
+                 Agent data will be loaded here by JavaScript 
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-
-      <!-- Survey Management Section -->
+       Survey Management Section 
       <section id="survey-management-section" class="section-content">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           Survey Management
@@ -590,14 +538,14 @@
                 id="survey-management-table-body"
                 class="bg-white divide-y divide-gray-200"
               >
-                <!-- Survey data will be loaded here by JavaScript -->
+                 Survey data will be loaded here by JavaScript 
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- Point Transfers Section -->
+       Point Transfers Section 
       <section id="point-transfers-section" class="section-content">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           Point Transfers
@@ -715,7 +663,7 @@
                 id="pointTransfersTableBody"
                 class="bg-white divide-y divide-gray-200"
               >
-                <!-- Point transfer data will be loaded here by JavaScript -->
+                 Point transfer data will be loaded here by JavaScript 
               </tbody>
             </table>
           </div>
@@ -741,7 +689,7 @@
         </div>
       </section>
 
-      <!-- Redemption Requests Section -->
+       Redemption Requests Section 
       <section id="redemption-requests-section" class="section-content">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           Redemption Requests
@@ -768,14 +716,14 @@
                 id="redemption-requests-table-body"
                 class="bg-white divide-y divide-gray-200"
               >
-                <!-- Redemption requests will be loaded here by JavaScript -->
+                 Redemption requests will be loaded here by JavaScript 
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- Fraud Management Section -->
+       Fraud Management Section 
       <section id="fraud-management-section" class="section-content">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           Fraud Management
@@ -799,7 +747,7 @@
                 id="fraud-flags-table-body"
                 class="bg-white divide-y divide-gray-200"
               >
-                <!-- Fraud flags will be loaded here by JavaScript -->
+                 Fraud flags will be loaded here by JavaScript 
               </tbody>
             </table>
           </div>
@@ -826,7 +774,7 @@
                 id="fraud-rules-table-body"
                 class="bg-white divide-y divide-gray-200"
               >
-                <!-- Fraud rules will be loaded here by JavaScript -->
+                 Fraud rules will be loaded here by JavaScript 
               </tbody>
             </table>
           </div>
