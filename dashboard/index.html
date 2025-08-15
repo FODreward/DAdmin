@@ -1,861 +1,667 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link href="/styles.css" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="flex h-screen">
-     Sidebar 
-    <aside id="sidebar" class="sidebar">
-      <div class="p-4 border-b border-gray-700 flex items-center">
-        <h1 class="text-2xl font-bold sidebar-header-text">Admin Panel</h1>
-        <button id="sidebar-toggle" class="ml-auto p-2 focus:outline-none">
-          <svg
-            class="w-6 h-6 sidebar-toggle-icon"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16"
-            ></path>
-          </svg>
-        </button>
-      </div>
-      <nav class="flex-1 p-4">
-        <ul>
-          <li class="mb-2">
-            <a
-              href="#"
-              id="dashboard-overview-link"
-              class="flex items-center p-2 hover:bg-gray-700 rounded-md"
-            >
-              <svg
-                class="w-6 h-6 mr-2 icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001 1h2a1 1 0 001-1m-6 0h4"
-                ></path>
-              </svg>
-              <span class="sidebar-link-text text">Dashboard Overview</span>
-            </a>
-          </li>
-          <li class="mb-2">
-            <a
-              href="#"
-              id="user-management-link"
-              class="flex items-center p-2 hover:bg-gray-700 rounded-md"
-            >
-              <svg
-                class="w-6 h-6 mr-2 icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm-6-9a4 4 0 100-8 4 4 0 000 8zm6 9v-1a6 6 0 00-9-5.197V21h9z"
-                ></path>
-              </svg>
-              <span class="sidebar-link-text text">User Management</span>
-            </a>
-          </li>
-          <li class="mb-2">
-            <a
-              href="#"
-              id="agent-management-link"
-              class="flex items-center p-2 hover:bg-gray-700 rounded-md"
-            >
-              <svg
-                class="w-6 h-6 mr-2 icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17 20h2a2 2 0 002-2V4a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h2m5-10l4 4m0 0l4-4m-4 4V3"
-                ></path>
-              </svg>
-              <span class="sidebar-link-text text">Agent Management</span>
-            </a>
-          </li>
-          <li class="mb-2">
-            <a
-              href="#"
-              id="survey-management-link"
-              class="flex items-center p-2 hover:bg-gray-700 rounded-md"
-            >
-              <svg
-                class="w-6 h-6 mr-2 icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                ></path>
-              </svg>
-              <span class="sidebar-link-text text">Survey Management</span>
-            </a>
-          </li>
-          <li class="mb-2">
-            <a
-              href="#"
-              id="point-transfers-link"
-              class="flex items-center p-2 hover:bg-gray-700 rounded-md"
-            >
-              <svg
-                class="w-6 h-6 mr-2 icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                ></path>
-              </svg>
-              <span class="sidebar-link-text text">Point Transfers</span>
-            </a>
-          </li>
-          <li class="mb-2">
-            <a
-              href="#"
-              id="redemption-requests-link"
-              class="flex items-center p-2 hover:bg-gray-700 rounded-md"
-            >
-              <svg
-                class="w-6 h-6 mr-2 icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 10h18M7 15h10m-9 4h8a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z"
-                ></path>
-              </svg>
-              <span class="sidebar-link-text text">Redemption Requests</span>
-            </a>
-          </li>
-          <li class="mb-2">
-            <a
-              href="#"
-              id="fraud-management-link"
-              class="flex items-center p-2 hover:bg-gray-700 rounded-md"
-            >
-              <svg
-                class="w-6 h-6 mr-2 icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                ></path>
-              </svg>
-              <span class="sidebar-link-text text">Fraud Management</span>
-            </a>
-          </li>
-          <li class="mb-2">
-            <a
-              href="#"
-              id="system-settings-link"
-              class="flex items-center p-2 hover:bg-gray-700 rounded-md"
-            >
-              <svg
-                class="w-6 h-6 mr-2 icon"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                ></path>
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                ></path>
-              </svg>
-              <span class="sidebar-link-text text">System Settings</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-      <div class="p-4 border-t border-gray-700">
-        <button
-          id="logout-button"
-          class="w-full flex items-center p-2 text-red-400 hover:bg-gray-700 rounded-md"
-        >
-          <svg
-            class="w-6 h-6 mr-2 icon"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-            ></path>
-          </svg>
-          <span class="sidebar-link-text text">Logout</span>
-        </button>
-      </div>
-    </aside>
+    <style>
+        /* Enhanced responsive CSS with modern design */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-     Main Content 
-    <main id="main-content" class="main-content">
-      <header class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-semibold text-gray-800">Admin Dashboard</h1>
-        <div class="text-gray-600">Welcome, Admin!</div>
-      </header>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1a202c;
+            line-height: 1.6;
+        }
 
-       Dashboard Overview Section 
-      <section id="dashboard-overview-section" class="section-content active">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div class="card">
-            <h2 class="text-lg font-medium text-gray-600">Total Users</h2>
-            <p id="total-users-card" class="text-4xl font-bold text-gray-900">
-              0
-            </p>
-          </div>
-          <div class="card">
-            <h2 class="text-lg font-medium text-gray-600">
-              Total Surveys Completed
-            </h2>
-            <p id="total-surveys-card" class="text-4xl font-bold text-gray-900">
-              0
-            </p>
-          </div>
-          <div class="card">
-            <h2 class="text-lg font-medium text-gray-600">
-              Total Points Distributed
-            </h2>
-            <p id="total-points-card" class="text-4xl font-bold text-gray-900">
-              0
-            </p>
-          </div>
-          <div class="card">
-            <h2 class="text-lg font-medium text-gray-600">
-              Pending Redemptions
-            </h2>
-            <p
-              id="pending-redemptions-card"
-              class="text-4xl font-bold text-gray-900"
-            >
-              0
-            </p>
-          </div>
-          <div class="card">
-            <h2 class="text-lg font-medium text-gray-600">
-              System Reward Percentage
-            </h2>
-            <p
-              id="reward-percentage-card"
-              class="text-4xl font-bold text-gray-900"
-            >
-              N/A
-            </p>
-          </div>
+        /* Responsive sidebar */
+        #sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        #sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        #main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+            padding: 20px;
+        }
+
+        #main-content.collapsed {
+            margin-left: 0;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+            }
+            
+            #sidebar.show {
+                transform: translateX(0);
+            }
+            
+            #main-content {
+                margin-left: 0;
+            }
+            
+            .mobile-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 1rem;
+                background: white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                margin: -20px -20px 20px -20px;
+            }
+        }
+
+        /* Search inputs */
+        .search-container {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a0aec0;
+        }
+
+        /* Enhanced tables */
+        .table-container {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f7fafc;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background-color: #f7fafc;
+        }
+
+        /* Responsive table */
+        @media (max-width: 768px) {
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 600px;
+            }
+        }
+
+        /* Toggle switches */
+        .toggle-bg {
+            width: 3rem;
+            height: 1.5rem;
+            background-color: #cbd5e0;
+            border-radius: 9999px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .toggle-bg.checked {
+            background-color: #48bb78;
+        }
+
+        .toggle-dot {
+            width: 1.25rem;
+            height: 1.25rem;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 0.125rem;
+            left: 0.125rem;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-dot.checked {
+            transform: translateX(1.5rem);
+        }
+
+        /* Action buttons */
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: 0.5rem;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Navigation */
+        .nav-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            margin: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        /* Section content */
+        .section-content {
+            display: none;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
+        /* Form elements */
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        /* Mobile menu button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: #48bb78;
+            color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #f56565;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Header -->
+    <div class="mobile-header" style="display: none;">
+        <h1 style="font-size: 1.25rem; font-weight: 600;">Admin Dashboard</h1>
+        <button class="mobile-menu-btn" id="sidebar-toggle">☰</button>
+    </div>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <div style="padding: 2rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <h2 style="font-size: 1.5rem; font-weight: 700;">Admin Panel</h2>
         </div>
-
-        <div class="card mb-8">
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">
-            Recent Activity Log
-          </h2>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="timestamp"
-                  >
-                    Timestamp
-                  </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="type"
-                  >
-                    Type
-                  </th>
-                  <th scope="col" class="table-header">Message</th>
-                </tr>
-              </thead>
-              <tbody
-                id="activity-log-table-body"
-                class="bg-white divide-y divide-gray-200"
-              >
-                 Activity logs will be loaded here by JavaScript 
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-       System Settings Section 
-      <section id="system-settings-section" class="section-content">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">
-          System Settings
-        </h2>
-        <div class="card mb-8">
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th scope="col" class="table-header">Setting</th>
-                  <th scope="col" class="table-header">Value</th>
-                  <th scope="col" class="table-header">Actions</th>
-                </tr>
-              </thead>
-              <tbody
-                id="system-settings-table-body"
-                class="bg-white divide-y divide-gray-200"
-              >
-                 Settings will be loaded here by JavaScript 
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-       User Management Section 
-      <section id="user-management-section" class="section-content">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">
-          User Management
-        </h2>
-        <div class="card mb-8">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-700">User List</h3>
-            <div class="flex items-center space-x-4">
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  value=""
-                  class="sr-only peer"
-                  id="auto-user-approval-toggle"
-                />
-                <div class="toggle-bg">
-                  <div class="toggle-dot"></div>
-                </div>
-                <span
-                  id="approvalStatusLabel"
-                  class="ml-3 text-sm font-medium text-gray-500"
-                  >Auto-Approval is OFF</span
-                >
-              </label>
-              <button
-                id="approve-all-pending-users-btn"
-                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm"
-              >
-                Approve All Pending
-              </button>
-              <button
-                id="reject-all-pending-users-btn"
-                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm"
-              >
-                Reject All Pending
-              </button>
-            </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="name"
-                  >
-                    Name
-                  </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="email"
-                  >
-                    Email
-                  </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="status"
-                  >
-                    Status
-                  </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="role"
-                  >
-                    Role
-                  </th>
-                  <th scope="col" class="relative px-6 py-3">
-                    <span class="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody
-                id="user-management-table-body"
-                class="bg-white divide-y divide-gray-200"
-              >
-                 User data will be loaded here by JavaScript 
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-       Agent Management Section 
-      <section id="agent-management-section" class="section-content">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">
-          Agent Management
-        </h2>
-        <div class="card mb-8">
-          <h3 class="text-lg font-medium text-gray-700 mb-4">Agent List</h3>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="name"
-                  >
-                    Name
-                  </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="referral_code"
-                  >
-                    Referral Code
-                  </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="referred_users"
-                  >
-                    Referred Users
-                  </th>
-                  <th scope="col" class="relative px-6 py-3">
-                    <span class="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody
-                id="agent-management-table-body"
-                class="bg-white divide-y divide-gray-200"
-              >
-                 Agent data will be loaded here by JavaScript 
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-       Survey Management Section 
-      <section id="survey-management-section" class="section-content">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">
-          Survey Management
-        </h2>
-        <div class="card mb-8">
-          <h3 class="text-lg font-medium text-gray-700 mb-4">Survey List</h3>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="title"
-                  >
-                    Title
-                  </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="points_reward"
-                  >
-                    Points Reward
-                  </th>
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="is_active"
-                  >
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody
-                id="survey-management-table-body"
-                class="bg-white divide-y divide-gray-200"
-              >
-                 Survey data will be loaded here by JavaScript 
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-       Point Transfers Section 
-      <section id="point-transfers-section" class="section-content">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">
-          Point Transfers
-        </h2>
-        <div class="card mb-8">
-          <h3 class="text-lg font-medium text-gray-700 mb-4">Send Points</h3>
-          <form
-            id="send-points-form"
-            class="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            <div>
-              <label
-                for="from-user-email"
-                class="block text-sm font-medium text-gray-700"
-                >From User Email (Optional, for system credit)</label
-              >
-              <input
-                type="email"
-                id="from-user-email"
-                class="input-field"
-                placeholder="admin@example.com"
-              />
-            </div>
-            <div>
-              <label
-                for="to-user-email"
-                class="block text-sm font-medium text-gray-700"
-                >To User Email</label
-              >
-              <input
-                type="email"
-                id="to-user-email"
-                required
-                class="input-field"
-                placeholder="user@example.com"
-              />
-            </div>
-            <div>
-              <label
-                for="points-amount"
-                class="block text-sm font-medium text-gray-700"
-                >Points Amount</label
-              >
-              <input
-                type="number"
-                id="points-amount"
-                required
-                min="1"
-                class="input-field"
-              />
-            </div>
-            <div class="md:col-span-2">
-              <button type="submit" class="submit-button">Send Points</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="card mb-8">
-          <h3 class="text-lg font-medium text-gray-700 mb-4">
-            Transfer History
-          </h3>
-          <div class="flex flex-wrap gap-4 mb-4">
-            <div>
-              <label
-                for="filterStartDate"
-                class="block text-sm font-medium text-gray-700"
-                >Start Date:</label
-              >
-              <input type="date" id="filterStartDate" class="input-field" />
-            </div>
-            <div>
-              <label
-                for="filterEndDate"
-                class="block text-sm font-medium text-gray-700"
-                >End Date:</label
-              >
-              <input type="date" id="filterEndDate" class="input-field" />
-            </div>
-            <div>
-              <label
-                for="searchEmail"
-                class="block text-sm font-medium text-gray-700"
-                >Search Email:</label
-              >
-              <input
-                type="text"
-                id="searchEmail"
-                placeholder="user@example.com"
-                class="input-field"
-              />
-            </div>
-            <div class="flex items-end">
-              <button
-                onclick="window.renderPointTransfers()"
-                class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
-              >
-                Apply Filters
-              </button>
-            </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th scope="col" class="table-header">From User</th>
-                  <th scope="col" class="table-header">To User</th>
-                  <th scope="col" class="table-header">Amount</th>
-                  <th scope="col" class="table-header">Date</th>
-                  <th scope="col" class="relative px-6 py-3">
-                    <span class="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody
-                id="pointTransfersTableBody"
-                class="bg-white divide-y divide-gray-200"
-              >
-                 Point transfer data will be loaded here by JavaScript 
-              </tbody>
-            </table>
-          </div>
-          <div class="flex justify-between items-center mt-4">
-            <button
-              onclick="window.prevPage()"
-              class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
-              id="prevPageBtn"
-            >
-              Previous
+        <nav style="padding: 1rem 0;">
+            <ul style="list-style: none;">
+                <li><a href="#" id="dashboard-overview-link" class="nav-link">📊 Dashboard</a></li>
+                <li><a href="#" id="system-settings-link" class="nav-link">⚙️ System Settings</a></li>
+                <li><a href="#" id="user-management-link" class="nav-link">👥 User Management</a></li>
+                <li><a href="#" id="agent-management-link" class="nav-link">🤝 Agent Management</a></li>
+                <li><a href="#" id="survey-management-link" class="nav-link">📋 Survey Management</a></li>
+                <li><a href="#" id="point-transfers-link" class="nav-link">💰 Point Transfers</a></li>
+                <li><a href="#" id="redemption-requests-link" class="nav-link">🎁 Redemption Requests</a></li>
+                <li><a href="#" id="fraud-management-link" class="nav-link">🛡️ Fraud Management</a></li>
+            </ul>
+        </nav>
+        <div style="position: absolute; bottom: 2rem; left: 1rem; right: 1rem;">
+            <button id="logout-button" class="btn btn-primary" style="width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+                🚪 Logout
             </button>
-            <span id="paginationInfo" class="text-sm text-gray-700"
-              >Page 1 of 1</span
-            >
-            <button
-              onclick="window.nextPage()"
-              class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
-              id="nextPageBtn"
-            >
-              Next
-            </button>
-          </div>
         </div>
-      </section>
+    </div>
 
-       Redemption Requests Section 
-      <section id="redemption-requests-section" class="section-content">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">
-          Redemption Requests
-        </h2>
-        <div class="card mb-8">
-          <h3 class="text-lg font-medium text-gray-700 mb-4">
-            Pending Redemptions
-          </h3>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th scope="col" class="table-header">User Email</th>
-                  <th scope="col" class="table-header">Points</th>
-                  <th scope="col" class="table-header">Type</th>
-                  <th scope="col" class="table-header">Destination</th>
-                  <th scope="col" class="table-header">Status</th>
-                  <th scope="col" class="relative px-6 py-3">
-                    <span class="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody
-                id="redemption-requests-table-body"
-                class="bg-white divide-y divide-gray-200"
-              >
-                 Redemption requests will be loaded here by JavaScript 
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-       Fraud Management Section 
-      <section id="fraud-management-section" class="section-content">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">
-          Fraud Management
-        </h2>
-
-        <div class="card mb-8">
-          <h3 class="text-lg font-medium text-gray-700 mb-4">Fraud Flags</h3>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th scope="col" class="table-header">User Email</th>
-                  <th scope="col" class="table-header">Reason</th>
-                  <th scope="col" class="table-header">Created At</th>
-                  <th scope="col" class="relative px-6 py-3">
-                    <span class="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody
-                id="fraud-flags-table-body"
-                class="bg-white divide-y divide-gray-200"
-              >
-                 Fraud flags will be loaded here by JavaScript 
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card mb-8">
-          <h3 class="text-lg font-medium text-gray-700 mb-4">
-            Fraud Rules Configuration
-          </h3>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th scope="col" class="table-header">Rule Key</th>
-                  <th scope="col" class="table-header">Description</th>
-                  <th scope="col" class="table-header">Limit Value</th>
-                  <th scope="col" class="table-header">Action</th>
-                  <th scope="col" class="relative px-6 py-3">
-                    <span class="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody
-                id="fraud-rules-table-body"
-                class="bg-white divide-y divide-gray-200"
-              >
-                 Fraud rules will be loaded here by JavaScript 
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- Enhanced user management section with search -->
-      <section id="user-management" class="section hidden">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-              <h2 class="text-xl font-semibold text-gray-900">User Management</h2>
-              <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <div class="relative">
-                  <input type="text" id="user-search" placeholder="Search by email, ID, or name..." 
-                         class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                  </div>
+    <!-- Main Content -->
+    <div id="main-content">
+        <!-- Dashboard Overview Section -->
+        <div id="dashboard-overview-section" class="section-content active">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">Dashboard Overview</h1>
+            
+            <div class="stats-grid">
+                <div class="card">
+                    <h3 style="color: #667eea; font-weight: 600; margin-bottom: 0.5rem;">Total Users</h3>
+                    <p id="total-users-card" style="font-size: 2rem; font-weight: 700;">0</p>
                 </div>
-              </div>
-            </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Details</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="user-management-table-body" class="bg-white divide-y divide-gray-200">
-                <!-- Users will be populated here -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- Enhanced agent management section with search -->
-      <section id="agent-management" class="section hidden">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-              <h2 class="text-xl font-semibold text-gray-900">Agent Management</h2>
-              <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <div class="relative">
-                  <input type="text" id="agent-search" placeholder="Search by email, ID, name, or referral code..." 
-                         class="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                  <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                  </div>
+                <div class="card">
+                    <h3 style="color: #48bb78; font-weight: 600; margin-bottom: 0.5rem;">Total Surveys</h3>
+                    <p id="total-surveys-card" style="font-size: 2rem; font-weight: 700;">0</p>
                 </div>
-              </div>
+                <div class="card">
+                    <h3 style="color: #ed8936; font-weight: 600; margin-bottom: 0.5rem;">Total Points</h3>
+                    <p id="total-points-card" style="font-size: 2rem; font-weight: 700;">0</p>
+                </div>
+                <div class="card">
+                    <h3 style="color: #f56565; font-weight: 600; margin-bottom: 0.5rem;">Pending Redemptions</h3>
+                    <p id="pending-redemptions-card" style="font-size: 2rem; font-weight: 700;">0</p>
+                </div>
+                <div class="card">
+                    <h3 style="color: #9f7aea; font-weight: 600; margin-bottom: 0.5rem;">Reward Percentage</h3>
+                    <p id="reward-percentage-card" style="font-size: 2rem; font-weight: 700;">0%</p>
+                </div>
             </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent Details</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Referral Code</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="agent-management-table-body" class="bg-white divide-y divide-gray-200">
-                <!-- Agents will be populated here -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-    </main>
 
-    <script src="/script.js"></script>
-  </body>
+            <div class="card">
+                <h3 style="font-weight: 600; margin-bottom: 1rem;">Recent Activity</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Type</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-log-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Section -->
+        <div id="user-management-section" class="section-content">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">User Management</h1>
+            
+            <!-- Search functionality -->
+            <div class="search-container">
+                <div style="position: relative;">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="user-search-input" class="search-input" placeholder="Search by name, email, or ID..." onkeyup="renderUserManagement()">
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="font-weight: 600;">Auto User Approval</h3>
+                    <div style="display: flex; align-items: center;">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" id="auto-user-approval-toggle" />
+                            <div class="toggle-bg">
+                                <div class="toggle-dot"></div>
+                            </div>
+                        </label>
+                        <span class="ml-3 text-sm font-semibold text-gray-700" id="approvalStatusLabel">Auto-Approval is OFF</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <button id="approve-all-pending-users-btn" class="btn btn-primary" style="background: #48bb78;">Approve All Pending</button>
+                    <button id="reject-all-pending-users-btn" class="btn btn-primary" style="background: #f56565;">Reject All Pending</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Date Joined</th>
+                            <th>Status</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-management-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Agent Management Section -->
+        <div id="agent-management-section" class="section-content">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">Agent Management</h1>
+            
+            <!-- Search functionality -->
+            <div class="search-container">
+                <div style="position: relative;">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="agent-search-input" class="search-input" placeholder="Search by name, email, ID, or referral code..." onkeyup="renderAgentManagement()">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Agent ID</th>
+                            <th>Name</th>
+                            <th>Referral Code</th>
+                            <th>Date Appointed</th>
+                            <th>Referred Users</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agent-management-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Other sections remain the same... -->
+        <!-- System Settings Section -->
+        <div id="system-settings-section" class="section-content">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">System Settings</h1>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Setting</th>
+                            <th>Value</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="system-settings-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Survey Management Section -->
+        <div id="survey-management-section" class="section-content">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">Survey Management</h1>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Survey ID</th>
+                            <th>Title</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="survey-management-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Point Transfers Section -->
+        <div id="point-transfers-section" class="section-content">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">Point Transfers</h1>
+            
+            <div class="card">
+                <h3 style="font-weight: 600; margin-bottom: 1rem;">Send Points</h3>
+                <form id="send-points-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">From User Email (Optional)</label>
+                        <input type="email" id="from-user-email" class="input-field" placeholder="Leave blank for admin transfer">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">To User Email</label>
+                        <input type="email" id="to-user-email" class="input-field" required>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Points Amount</label>
+                        <input type="number" id="points-amount" class="input-field" min="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Points</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3 style="font-weight: 600; margin-bottom: 1rem;">Filter Transfers</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: end;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Start Date</label>
+                        <input type="date" id="filterStartDate" class="input-field">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">End Date</label>
+                        <input type="date" id="filterEndDate" class="input-field">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Search Email</label>
+                        <input type="text" id="searchEmail" class="input-field" placeholder="Search by email">
+                    </div>
+                    <button onclick="window.renderPointTransfers()" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>From User</th>
+                            <th>To User</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pointTransfersTableBody"></tbody>
+                </table>
+                <div style="display: flex; justify-content: between; align-items: center; padding: 1rem;">
+                    <button onclick="window.prevPage()" class="btn btn-primary">Previous</button>
+                    <span id="paginationInfo" style="margin: 0 1rem;">Page 1 of 1</span>
+                    <button onclick="window.nextPage()" class="btn btn-primary">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Redemption Requests Section -->
+        <div id="redemption-requests-section" class="section-content">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">Redemption Requests</h1>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Points</th>
+                            <th>Type</th>
+                            <th>Destination</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="redemption-requests-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Fraud Management Section -->
+        <div id="fraud-management-section" class="section-content">
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">Fraud Management</h1>
+            
+            <div class="card">
+                <h3 style="font-weight: 600; margin-bottom: 1rem;">Fraud Flags</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User Email</th>
+                                <th>Reason</th>
+                                <th>Date Flagged</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fraud-flags-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="font-weight: 600; margin-bottom: 1rem;">Fraud Rules</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rule</th>
+                                <th>Description</th>
+                                <th>Limit</th>
+                                <th>Action</th>
+                                <th>Save</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fraud-rules-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const mobileHeader = document.querySelector('.mobile-header');
+            
+            // Show mobile header on small screens
+            function checkScreenSize() {
+                if (window.innerWidth <= 768) {
+                    mobileHeader.style.display = 'flex';
+                    sidebar.classList.remove('show');
+                } else {
+                    mobileHeader.style.display = 'none';
+                    sidebar.classList.remove('show');
+                }
+            }
+            
+            checkScreenSize();
+            window.addEventListener('resize', checkScreenSize);
+            
+            // Mobile menu toggle
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('show');
+            });
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768 && 
+                    !sidebar.contains(e.target) && 
+                    !sidebarToggle.contains(e.target) &&
+                    sidebar.classList.contains('show')) {
+                    sidebar.classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
 </html>
