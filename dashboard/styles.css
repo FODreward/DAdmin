@@ -440,7 +440,7 @@ tbody td {
 
   .mobile-header {
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: center;
     padding: 1rem;
     background-color: var(--card-background);
