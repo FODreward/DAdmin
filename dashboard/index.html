@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard</title>
-    <link href="styles.css" rel="stylesheet" />
+    <link href="/styles.css" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
@@ -253,18 +253,7 @@
 
     <!-- Main Content -->
     <main id="main-content" class="main-content">
-      <!-- Mobile Header -->
-      <div class="mobile-header lg:hidden">
-        <button id="mobile-menu-btn" class="mobile-menu-btn">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-        </button>
-        <h1 class="text-xl font-semibold text-gray-800">Admin Dashboard</h1>
-        <div></div>
-      </div>
-
-      <header class="flex justify-between items-center mb-8 hidden lg:flex">
+      <header class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-semibold text-gray-800">Admin Dashboard</h1>
         <div class="text-gray-600">Welcome, Admin!</div>
       </header>
@@ -322,7 +311,7 @@
           <h2 class="text-xl font-semibold text-gray-800 mb-4">
             Recent Activity Log
           </h2>
-          <div class="table-container overflow-x-auto">
+          <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -360,7 +349,7 @@
           System Settings
         </h2>
         <div class="card mb-8">
-          <div class="table-container overflow-x-auto">
+          <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -385,26 +374,22 @@
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           User Management
         </h2>
-        
-        <!-- Added search functionality for users -->
-        <div class="card mb-6">
-          <div class="search-container">
-            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input
-              type="text"
-              id="user-search-input"
-              class="search-input"
-              placeholder="Search users by email or ID..."
-            />
-          </div>
-        </div>
-        
         <div class="card mb-8">
           <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
             <h3 class="text-lg font-medium text-gray-700">User List</h3>
-            <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <!-- Added search functionality for users -->
+              <div class="search-container">
+                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input
+                  type="text"
+                  id="user-search-input"
+                  class="search-input"
+                  placeholder="Search by email or user ID..."
+                />
+              </div>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
@@ -421,23 +406,21 @@
                   >Auto-Approval is OFF</span
                 >
               </label>
-              <div class="flex space-x-2 w-full sm:w-auto">
-                <button
-                  id="approve-all-pending-users-btn"
-                  class="btn-success flex-1 sm:flex-none"
-                >
-                  Approve All Pending
-                </button>
-                <button
-                  id="reject-all-pending-users-btn"
-                  class="btn-danger flex-1 sm:flex-none"
-                >
-                  Reject All Pending
-                </button>
-              </div>
+              <button
+                id="approve-all-pending-users-btn"
+                class="btn-success"
+              >
+                Approve All Pending
+              </button>
+              <button
+                id="reject-all-pending-users-btn"
+                class="btn-danger"
+              >
+                Reject All Pending
+              </button>
             </div>
           </div>
-          <div class="table-container overflow-x-auto">
+          <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -453,23 +436,7 @@
                     class="table-header sortable-header"
                     data-sort-by="email"
                   >
-                    Email
-                  </th>
-                  <!-- Added User ID column -->
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="id"
-                  >
-                    User ID
-                  </th>
-                  <!-- Added Join Date column -->
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="created_at"
-                  >
-                    Join Date
+                    Email & ID
                   </th>
                   <th
                     scope="col"
@@ -484,6 +451,13 @@
                     data-sort-by="role"
                   >
                     Role
+                  </th>
+                  <th
+                    scope="col"
+                    class="table-header sortable-header"
+                    data-sort-by="created_at"
+                  >
+                    Join Date
                   </th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Actions</span>
@@ -506,25 +480,23 @@
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
           Agent Management
         </h2>
-        
-        <!-- Added search functionality for agents -->
-        <div class="card mb-6">
-          <div class="search-container">
-            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input
-              type="text"
-              id="agent-search-input"
-              class="search-input"
-              placeholder="Search agents by email or ID..."
-            />
-          </div>
-        </div>
-        
         <div class="card mb-8">
-          <h3 class="text-lg font-medium text-gray-700 mb-4">Agent List</h3>
-          <div class="table-container overflow-x-auto">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
+            <h3 class="text-lg font-medium text-gray-700">Agent List</h3>
+            <!-- Added search functionality for agents -->
+            <div class="search-container">
+              <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <input
+                type="text"
+                id="agent-search-input"
+                class="search-input"
+                placeholder="Search by email or agent ID..."
+              />
+            </div>
+          </div>
+          <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -535,21 +507,12 @@
                   >
                     Name
                   </th>
-                  <!-- Added Email column for agents -->
                   <th
                     scope="col"
                     class="table-header sortable-header"
                     data-sort-by="email"
                   >
-                    Email
-                  </th>
-                  <!-- Added Agent ID column -->
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="id"
-                  >
-                    Agent ID
+                    Email & ID
                   </th>
                   <th
                     scope="col"
@@ -558,20 +521,19 @@
                   >
                     Referral Code
                   </th>
-                  <!-- Added Appointment Date column -->
-                  <th
-                    scope="col"
-                    class="table-header sortable-header"
-                    data-sort-by="appointed_at"
-                  >
-                    Appointed Date
-                  </th>
                   <th
                     scope="col"
                     class="table-header sortable-header"
                     data-sort-by="referred_users"
                   >
                     Referred Users
+                  </th>
+                  <th
+                    scope="col"
+                    class="table-header sortable-header"
+                    data-sort-by="appointed_at"
+                  >
+                    Appointed Date
                   </th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">Actions</span>
@@ -589,6 +551,7 @@
         </div>
       </section>
 
+
       <!-- Survey Management Section -->
       <section id="survey-management-section" class="section-content">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">
@@ -596,7 +559,7 @@
         </h2>
         <div class="card mb-8">
           <h3 class="text-lg font-medium text-gray-700 mb-4">Survey List</h3>
-          <div class="table-container overflow-x-auto">
+          <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -735,7 +698,7 @@
               </button>
             </div>
           </div>
-          <div class="table-container overflow-x-auto">
+          <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -772,7 +735,7 @@
               class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"
               id="nextPageBtn"
             >
-            Next
+              Next
             </button>
           </div>
         </div>
@@ -787,7 +750,7 @@
           <h3 class="text-lg font-medium text-gray-700 mb-4">
             Pending Redemptions
           </h3>
-          <div class="table-container overflow-x-auto">
+          <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -820,7 +783,7 @@
 
         <div class="card mb-8">
           <h3 class="text-lg font-medium text-gray-700 mb-4">Fraud Flags</h3>
-          <div class="table-container overflow-x-auto">
+          <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
@@ -846,7 +809,7 @@
           <h3 class="text-lg font-medium text-gray-700 mb-4">
             Fraud Rules Configuration
           </h3>
-          <div class="table-container overflow-x-auto">
+          <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
