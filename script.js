@@ -189,10 +189,8 @@
   // --- Data Storage (Now fetched from API) ---
   let users = []
   let agents = []
-  // const surveys = [] // No longer needed as surveys are fetched dynamically
-  // const pointTransfers = [] // No longer needed as transfers are fetched dynamically
-  // let redemptionRequests = [] // No longer needed as redemptions are fetched dynamically
-  // const systemSettings = [] // No longer needed as settings are fetched dynamically
+  let filteredUsers = []
+  let filteredAgents = []
 
   // --- DOM Elements (Dashboard) ---
   let sidebar, mainContent, sidebarToggle, navLinks, sections
@@ -208,7 +206,9 @@
   let sendPointsForm
   let logoutButton
   let fraudFlagsTableBody
-  let fraudRulesTableBody // Added for fraud rules
+  let fraudRulesTableBody
+  let userSearchInput, agentSearchInput
+  let mobileOverlay
 
   function initializeDashboardElements() {
     sidebar = document.getElementById("sidebar")
@@ -216,64 +216,89 @@
     sidebarToggle = document.getElementById("sidebar-toggle")
     navLinks = document.querySelectorAll("#sidebar ul li a")
     sections = document.querySelectorAll(".section-content")
+    mobileOverlay = document.getElementById("mobile-overlay")
 
     totalUsersCard = document.getElementById("total-users-card")
     totalSurveysCard = document.getElementById("total-surveys-card")
     totalPointsCard = document.getElementById("total-points-card")
     pendingRedemptionsCard = document.getElementById("pending-redemptions-card")
-    rewardPercentageCard = document.getElementById("reward-percentage-card") // Added
+    rewardPercentageCard = document.getElementById("reward-percentage-card")
 
     systemSettingsTableBody = document.getElementById("system-settings-table-body")
     userManagementTableBody = document.getElementById("user-management-table-body")
     agentManagementTableBody = document.getElementById("agent-management-table-body")
     surveyManagementTableBody = document.getElementById("survey-management-table-body")
-    pointTransfersTableBody = document.getElementById("pointTransfersTableBody") // Corrected ID
+    pointTransfersTableBody = document.getElementById("pointTransfersTableBody")
     redemptionRequestsTableBody = document.getElementById("redemption-requests-table-body")
     activityLogTableBody = document.getElementById("activity-log-table-body")
+    fraudFlagsTableBody = document.getElementById("fraud-flags-table-body")
+    fraudRulesTableBody = document.getElementById("fraud-rules-table-body")
 
     autoUserApprovalToggle = document.getElementById("auto-user-approval-toggle")
     approveAllPendingUsersBtn = document.getElementById("approve-all-pending-users-btn")
     rejectAllPendingUsersBtn = document.getElementById("reject-all-pending-users-btn")
-
     sendPointsForm = document.getElementById("send-points-form")
     logoutButton = document.getElementById("logout-button")
-    fraudFlagsTableBody = document.getElementById("fraud-flags-table-body")
-    fraudRulesTableBody = document.getElementById("fraud-rules-table-body") // Added for fraud rules
+
+    userSearchInput = document.getElementById("user-search-input")
+    agentSearchInput = document.getElementById("agent-search-input")
   }
 
-  // --- Sidebar & Navigation Logic ---
-  function setupSidebarAndNav() {
+  function initializeDashboardEventListeners() {
     if (sidebarToggle) {
       sidebarToggle.addEventListener("click", () => {
-        sidebar.classList.toggle("collapsed")
-        mainContent.classList.toggle("collapsed")
+        if (window.innerWidth <= 1024) {
+          sidebar.classList.toggle("open")
+          mobileOverlay.classList.toggle("active")
+        } else {
+          sidebar.classList.toggle("collapsed")
+          mainContent.classList.toggle("expanded")
+        }
       })
     }
 
-    if (navLinks) {
-      navLinks.forEach((link) => {
-        link.addEventListener("click", (e) => {
-          e.preventDefault()
-          const targetSectionId = link.id.replace("-link", "-section")
-
-          // Update URL hash without full page reload
-          history.pushState(null, "", `#${targetSectionId}`)
-
-          navLinks.forEach((nav) => nav.classList.remove("bg-gray-700", "text-white"))
-          sections.forEach((sec) => sec.classList.remove("active"))
-
-          link.classList.add("bg-gray-700", "text-white")
-          document.getElementById(targetSectionId).classList.add("active")
-
-          renderSectionContent(targetSectionId)
-        })
+    if (mobileOverlay) {
+      mobileOverlay.addEventListener("click", () => {
+        sidebar.classList.remove("open")
+        mobileOverlay.classList.remove("active")
       })
     }
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 1024) {
+        sidebar.classList.remove("open")
+        mobileOverlay.classList.remove("active")
+      }
+    })
+
+    // Navigation links
+    navLinks.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault()
+        const targetSectionId = link.id.replace("-link", "-section")
+
+        // Close mobile sidebar
+        if (window.innerWidth <= 1024) {
+          sidebar.classList.remove("open")
+          mobileOverlay.classList.remove("active")
+        }
+
+        // Update URL hash
+        window.history.pushState(null, null, `#${targetSectionId.replace("-section", "")}`)
+
+        navLinks.forEach((nav) => nav.classList.remove("bg-gray-700", "text-white"))
+        sections.forEach((sec) => sec.classList.remove("active"))
+
+        link.classList.add("bg-gray-700", "text-white")
+        document.getElementById(targetSectionId).classList.add("active")
+        renderSectionContent(targetSectionId)
+      })
+    })
 
     // Handle browser back/forward buttons
     window.addEventListener("popstate", () => {
-      const hash = window.location.hash.substring(1) // Remove '#'
-      const targetSectionId = hash || "dashboard-overview-section" // Default if no hash
+      const hash = window.location.hash.substring(1)
+      const targetSectionId = hash || "dashboard-overview-section"
 
       navLinks.forEach((nav) => nav.classList.remove("bg-gray-700", "text-white"))
       sections.forEach((sec) => sec.classList.remove("active"))
@@ -285,15 +310,77 @@
       document.getElementById(targetSectionId).classList.add("active")
       renderSectionContent(targetSectionId)
     })
+
+    if (userSearchInput) {
+      userSearchInput.addEventListener("input", (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim()
+        if (searchTerm === "") {
+          filteredUsers = users
+        } else {
+          filteredUsers = users.filter(
+            (user) =>
+              user.email.toLowerCase().includes(searchTerm) ||
+              user.id.toString().includes(searchTerm) ||
+              (user.name && user.name.toLowerCase().includes(searchTerm)),
+          )
+        }
+        renderUserManagementTable()
+      })
+    }
+
+    if (agentSearchInput) {
+      agentSearchInput.addEventListener("input", (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim()
+        if (searchTerm === "") {
+          filteredAgents = agents
+        } else {
+          filteredAgents = agents.filter(
+            (agent) =>
+              agent.email.toLowerCase().includes(searchTerm) ||
+              agent.id.toString().includes(searchTerm) ||
+              (agent.name && agent.name.toLowerCase().includes(searchTerm)) ||
+              (agent.referral_code && agent.referral_code.toLowerCase().includes(searchTerm)),
+          )
+        }
+        renderAgentManagementTable()
+      })
+    }
+
+    if (autoUserApprovalToggle) {
+      autoUserApprovalToggle.addEventListener("change", async (e) => {
+        const isEnabled = e.target.checked
+        const toggleBg = autoUserApprovalToggle.parentElement.querySelector(".toggle-bg")
+        const statusLabel = document.getElementById("approvalStatusLabel")
+
+        try {
+          await fetchApi("/admin/settings/auto-approval", "PUT", { enabled: isEnabled }, true)
+
+          if (isEnabled) {
+            toggleBg.classList.add("active")
+            statusLabel.textContent = "Auto-Approval is ON"
+            statusLabel.classList.remove("text-gray-500")
+            statusLabel.classList.add("text-green-600")
+          } else {
+            toggleBg.classList.remove("active")
+            statusLabel.textContent = "Auto-Approval is OFF"
+            statusLabel.classList.remove("text-green-600")
+            statusLabel.classList.add("text-gray-500")
+          }
+        } catch (error) {
+          console.error("Failed to update auto-approval setting:", error)
+          e.target.checked = !isEnabled // Revert toggle
+          alert("Failed to update auto-approval setting")
+        }
+      })
+    }
   }
 
   async function renderSectionContent(sectionId) {
-    // Add loading indicators here if desired
     try {
       switch (sectionId) {
         case "dashboard-overview-section":
           await renderDashboardOverview()
-          await renderActivityLog() // Also render activity log on dashboard overview
+          await renderActivityLog()
           break
         case "system-settings-section":
           await renderSystemSettings()
@@ -305,31 +392,27 @@
           await renderAgentManagement()
           break
         case "survey-management-section":
-          await renderSurveyManagement() // This will now show the "closed" message
+          await renderSurveyManagement()
           break
         case "point-transfers-section":
-          window.renderPointTransfers() // Call the global function
+          await renderPointTransfers()
           break
         case "redemption-requests-section":
           await renderRedemptionRequests()
           break
         case "fraud-management-section":
           await renderFraudManagement()
-          await renderFraudRules() // Render fraud rules when fraud management section is active
           break
       }
     } catch (error) {
-      console.error(`Error rendering section ${sectionId}:`, error)
-      alert(
-        `Failed to load data for ${sectionId.replace("-section", "").replace("-", " ")}. Please try again or check console for details.`,
-      )
+      console.error(`Failed to render section ${sectionId}:`, error)
     }
   }
 
   // --- Dashboard Overview ---
   async function renderDashboardOverview() {
     try {
-      const stats = await fetchApi("/admin/dashboard/stats", "GET", null, true) // Fetch admin dashboard stats
+      const stats = await fetchApi("/admin/dashboard/stats", "GET", null, true)
       if (totalUsersCard) totalUsersCard.textContent = stats.total_users?.toLocaleString() || "0"
       if (totalSurveysCard) totalSurveysCard.textContent = stats.total_surveys_completed?.toLocaleString() || "0"
       if (totalPointsCard) totalPointsCard.textContent = stats.total_points_distributed?.toLocaleString() || "0"
@@ -347,8 +430,6 @@
     if (!activityLogTableBody) return
     activityLogTableBody.innerHTML = ""
     try {
-      // Note: This endpoint '/dashboard/activity' returns logs for the *current authenticated user*.
-      // For a true system-wide admin activity log, a different backend endpoint would be needed.
       const logs = await fetchApi("/dashboard/activity", "GET", null, true)
       if (logs.length === 0) {
         const row = activityLogTableBody.insertRow()
@@ -357,917 +438,751 @@
       }
       logs.forEach((log) => {
         const row = activityLogTableBody.insertRow()
+        row.className = "table-row"
         row.innerHTML = `
-          <td class="table-row-data">${new Date(log.timestamp).toLocaleString()}</td>
-          <td class="table-row-data font-medium text-gray-900">${log.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
-          <td class="table-row-data">${log.message}</td>
+          <td class="table-cell">
+            <div class="date-time">${formatDateTime(log.created_at)}</div>
+          </td>
+          <td class="table-cell">
+            <span class="status-badge ${getActivityTypeClass(log.type)}">${log.type}</span>
+          </td>
+          <td class="table-cell">${log.message}</td>
         `
       })
     } catch (error) {
-      console.error("Failed to fetch activity logs:", error)
-      alert(`Failed to load activity logs: ${error.message}`)
+      console.error("Failed to fetch activity log:", error)
+      const row = activityLogTableBody.insertRow()
+      row.innerHTML = `<td colspan="3" class="px-6 py-4 text-center text-sm text-red-500">Failed to load activity log.</td>`
     }
   }
 
   // --- System Settings ---
   async function renderSystemSettings() {
-    const systemSettingsTableBody = document.getElementById("system-settings-table-body")
     if (!systemSettingsTableBody) return
-
     systemSettingsTableBody.innerHTML = ""
-
     try {
-      const systemSettings = await fetchApi("/admin/settings", "GET", null, true)
-
-      systemSettings.forEach((setting) => {
-        // Skip rendering fraud rules in System Settings, as they are managed under Fraud Management
-        const fraudRuleKeys = [
-          "max_devices_per_user",
-          "max_users_per_fingerprint",
-          "max_ips_per_user_24h",
-          "max_signups_per_fingerprint_24h",
-        ]
-        if (fraudRuleKeys.includes(setting.key)) {
-          return // Skip this iteration
-        }
-
-        const isToggle = setting.key === "auto_user_approval" // Use specific key for toggle
-        const isChecked = setting.value === "true"
-
-        const row = document.createElement("tr")
-        row.setAttribute("data-key", setting.key)
-
+      const settings = await fetchApi("/admin/settings", "GET", null, true)
+      if (settings.length === 0) {
+        const row = systemSettingsTableBody.insertRow()
+        row.innerHTML = `<td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No settings found.</td>`
+        return
+      }
+      settings.forEach((setting) => {
+        const row = systemSettingsTableBody.insertRow()
+        row.className = "table-row"
         row.innerHTML = `
-          <td class="px-4 py-2 font-medium text-gray-800">
-            ${setting.key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-            ${setting.description ? `<p class="text-xs text-gray-500 mt-1">${setting.description}</p>` : ""}
+          <td class="table-cell">
+            <div class="font-medium text-gray-900">${setting.key}</div>
+            <div class="text-sm text-gray-500">${setting.description || ""}</div>
           </td>
-          <td class="px-4 py-2">
-            ${
-              isToggle
-                ? `
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" class="sr-only peer setting-toggle" id="${setting.key}-toggle" ${isChecked ? "checked" : ""} />
-                <div class="toggle-bg ${isChecked ? "checked" : ""}">
-                  <div class="toggle-dot ${isChecked ? "checked" : ""}"></div>
-                </div>
-              </label>
-              <span class="ml-3 text-sm font-semibold text-gray-700" id="${setting.key}-status">${
-                isChecked ? "ON" : "OFF"
-              }</span>
-            `
-                : `<input type="text" value="${setting.value}" class="input-field" id="${setting.key}-input">`
-            }
+          <td class="table-cell">
+            <span class="font-mono text-sm">${setting.value}</span>
           </td>
-          <td class="px-4 py-2">
-            <button class="btn btn-primary save-setting-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md" data-setting="${setting.key}">Save</button>
+          <td class="table-cell">
+            <button onclick="editSetting('${setting.key}', '${setting.value}')" class="btn-success">Edit</button>
           </td>
         `
-
-        systemSettingsTableBody.appendChild(row)
-
-        // Toggle logic
-        if (isToggle) {
-          const input = row.querySelector(`#${setting.key}-toggle`)
-          const toggleBg = row.querySelector(".toggle-bg")
-          const toggleDot = row.querySelector(".toggle-dot")
-          const status = row.querySelector(`#${setting.key}-status`)
-
-          input.addEventListener("change", () => {
-            const checked = input.checked
-            if (checked) {
-              toggleBg.classList.add("checked")
-              toggleDot.classList.add("checked")
-            } else {
-              toggleBg.classList.remove("checked")
-              toggleDot.classList.remove("checked")
-            }
-            status.textContent = checked ? "ON" : "OFF"
-          })
-        }
-
-        // Save logic
-        const saveBtn = row.querySelector(".save-setting-btn")
-        saveBtn.addEventListener("click", async () => {
-          let value
-          if (isToggle) {
-            const input = row.querySelector(`#${setting.key}-toggle`)
-            value = input.checked.toString()
-          } else {
-            const input = row.querySelector(`#${setting.key}-input`)
-            value = input.value.trim()
-          }
-
-          try {
-            // Use the description from the fetched setting or default to empty string
-            const descriptionToSend = setting.description || ""
-            await fetchApi("/admin/settings", "PUT", { key: setting.key, value, description: descriptionToSend }, true)
-            console.log(`Setting "${setting.key}" updated successfully.`) // Changed from alert
-          } catch (err) {
-            console.error("Error updating setting:", err)
-            alert(`Failed to update "${setting.key}".`)
-          }
-        })
       })
-    } catch (err) {
-      console.error("Failed to load system settings:", err)
-      alert("Could not load system settings.")
+    } catch (error) {
+      console.error("Failed to fetch settings:", error)
+      const row = systemSettingsTableBody.insertRow()
+      row.innerHTML = `<td colspan="3" class="px-6 py-4 text-center text-sm text-red-500">Failed to load settings.</td>`
+    }
+  }
+
+  async function editSetting(key, currentValue) {
+    const newValue = prompt(`Edit setting "${key}":`, currentValue)
+    if (newValue === null || newValue === currentValue) return
+
+    try {
+      await fetchApi("/admin/settings", "PUT", { key, value: newValue }, true)
+      await renderSystemSettings()
+      alert("Setting updated successfully")
+    } catch (error) {
+      console.error("Failed to update setting:", error)
+      alert("Failed to update setting")
     }
   }
 
   // --- User Management ---
   async function renderUserManagement() {
+    try {
+      const data = await fetchApi("/admin/users", "GET", null, true)
+      users = data
+      filteredUsers = data
+      renderUserManagementTable()
+
+      // Load auto-approval setting
+      const settings = await fetchApi("/admin/settings", "GET", null, true)
+      const autoApprovalSetting = settings.find((s) => s.key === "auto_user_approval")
+      if (autoApprovalSetting && autoUserApprovalToggle) {
+        const isEnabled = autoApprovalSetting.value === "true"
+        autoUserApprovalToggle.checked = isEnabled
+        const toggleBg = autoUserApprovalToggle.parentElement.querySelector(".toggle-bg")
+        const statusLabel = document.getElementById("approvalStatusLabel")
+
+        if (isEnabled) {
+          toggleBg.classList.add("active")
+          statusLabel.textContent = "Auto-Approval is ON"
+          statusLabel.classList.remove("text-gray-500")
+          statusLabel.classList.add("text-green-600")
+        } else {
+          toggleBg.classList.remove("active")
+          statusLabel.textContent = "Auto-Approval is OFF"
+          statusLabel.classList.remove("text-green-600")
+          statusLabel.classList.add("text-gray-500")
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error)
+      if (userManagementTableBody) {
+        userManagementTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-sm text-red-500">Failed to load users.</td></tr>`
+      }
+    }
+  }
+
+  function renderUserManagementTable() {
     if (!userManagementTableBody) return
     userManagementTableBody.innerHTML = ""
-    try {
-      users = await fetchApi("/admin/users", "GET", null, true) // Fetch all users
 
-      if (users.length === 0) {
-        const row = userManagementTableBody.insertRow()
-        row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No users found.</td>`
+    if (filteredUsers.length === 0) {
+      const row = userManagementTableBody.insertRow()
+      row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No users found.</td>`
+      return
+    }
+
+    filteredUsers.forEach((user) => {
+      const row = userManagementTableBody.insertRow()
+      row.className = "table-row"
+      row.innerHTML = `
+        <td class="table-cell">
+          <div class="font-medium text-gray-900">${user.name || "N/A"}</div>
+        </td>
+        <td class="table-cell">
+          <div class="font-medium text-gray-900">${user.email}</div>
+          <div class="user-id">ID: ${user.id}</div>
+        </td>
+        <td class="table-cell">
+          <span class="status-badge ${getStatusClass(user.status)}">${user.status}</span>
+        </td>
+        <td class="table-cell">
+          <span class="status-badge ${getRoleClass(user.role)}">${user.role}</span>
+        </td>
+        <td class="table-cell">
+          <div class="date-time">${formatDateTime(user.created_at)}</div>
+        </td>
+        <td class="table-cell">
+          <div class="flex flex-col sm:flex-row gap-2">
+            ${
+              user.status === "pending"
+                ? `
+              <button onclick="approveUser('${user.id}')" class="btn-success">Approve</button>
+              <button onclick="rejectUser('${user.id}')" class="btn-danger">Reject</button>
+            `
+                : user.status === "approved"
+                  ? `
+              <button onclick="suspendUser('${user.id}')" class="btn-warning">Suspend</button>
+            `
+                  : `
+              <button onclick="reactivateUser('${user.id}')" class="btn-success">Reactivate</button>
+            `
+            }
+          </div>
+        </td>
+      `
+    })
+  }
+
+  // --- Agent Management ---
+  async function renderAgentManagement() {
+    try {
+      const data = await fetchApi("/admin/agents", "GET", null, true)
+      agents = data
+      filteredAgents = data
+      renderAgentManagementTable()
+    } catch (error) {
+      console.error("Failed to fetch agents:", error)
+      if (agentManagementTableBody) {
+        agentManagementTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-sm text-red-500">Failed to load agents.</td></tr>`
+      }
+    }
+  }
+
+  function renderAgentManagementTable() {
+    if (!agentManagementTableBody) return
+    agentManagementTableBody.innerHTML = ""
+
+    if (filteredAgents.length === 0) {
+      const row = agentManagementTableBody.insertRow()
+      row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No agents found.</td>`
+      return
+    }
+
+    filteredAgents.forEach((agent) => {
+      const row = agentManagementTableBody.insertRow()
+      row.className = "table-row"
+      row.innerHTML = `
+        <td class="table-cell">
+          <div class="font-medium text-gray-900">${agent.name || "N/A"}</div>
+        </td>
+        <td class="table-cell">
+          <div class="font-medium text-gray-900">${agent.email}</div>
+          <div class="user-id">ID: ${agent.id}</div>
+        </td>
+        <td class="table-cell">
+          <div class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">${agent.referral_code}</div>
+        </td>
+        <td class="table-cell">
+          <span class="font-semibold text-blue-600">${agent.referred_users || 0}</span>
+        </td>
+        <td class="table-cell">
+          <div class="date-time">${formatDateTime(agent.appointed_at || agent.created_at)}</div>
+        </td>
+        <td class="table-cell">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button onclick="viewAgentDetails('${agent.id}')" class="btn-success">View Details</button>
+            <button onclick="removeAgent('${agent.id}')" class="btn-danger">Remove</button>
+          </div>
+        </td>
+      `
+    })
+  }
+
+  // --- Survey Management ---
+  async function renderSurveyManagement() {
+    if (!surveyManagementTableBody) return
+    surveyManagementTableBody.innerHTML = ""
+    try {
+      const surveys = await fetchApi("/admin/surveys", "GET", null, true)
+      if (surveys.length === 0) {
+        const row = surveyManagementTableBody.insertRow()
+        row.innerHTML = `<td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No surveys found.</td>`
         return
       }
-
-      users.forEach((user) => {
-        const row = userManagementTableBody.insertRow()
+      surveys.forEach((survey) => {
+        const row = surveyManagementTableBody.insertRow()
+        row.className = "table-row"
         row.innerHTML = `
-              <td class="table-row-data font-medium text-gray-900">${user.name}</td>
-              <td class="table-row-data">${user.email}</td>
-              <td class="table-row-data capitalize">${user.status}</td>
-              <td class="table-row-data capitalize">${user.is_admin ? "Admin" : user.is_agent ? "Agent" : "User"}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  ${user.status === "pending" ? `<button id="approve-user-${user.id}" class="action-btn approve-user-btn text-green-600 hover:text-green-900 mr-2">Approve</button>` : ""}
-                  ${user.status === "pending" ? `<button id="reject-user-${user.id}" class="action-btn reject-user-btn text-red-600 hover:text-red-900 mr-2">Reject</button>` : ""}
-                  ${user.status === "approved" ? `<button id="suspend-user-${user.id}" class="action-btn suspend-user-btn text-yellow-600 hover:text-yellow-900 mr-2">Suspend</button>` : ""}
-                  ${user.status === "suspended" ? `<button id="reactivate-user-${user.id}" class="action-btn reactivate-user-btn text-blue-600 hover:text-blue-900 mr-2">Reactivate</button>` : ""}
-                  ${!user.is_agent && !user.is_admin ? `<button id="promote-user-${user.id}" class="action-btn promote-user-btn text-purple-600 hover:text-purple-900">Promote to Agent</button>` : user.is_agent && !user.is_admin ? `<button id="demote-user-${user.id}" class="action-btn demote-user-btn text-orange-600 hover:text-orange-900">Demote from Agent</button>` : ""}
-              </td>
+          <td class="table-cell">
+            <div class="font-medium text-gray-900">${survey.title}</div>
+          </td>
+          <td class="table-cell">
+            <span class="font-semibold text-green-600">${survey.points_reward}</span>
+          </td>
+          <td class="table-cell">
+            <span class="status-badge ${survey.is_active ? "status-active" : "status-inactive"}">
+              ${survey.is_active ? "Active" : "Inactive"}
+            </span>
+          </td>
+        `
+      })
+    } catch (error) {
+      console.error("Failed to fetch surveys:", error)
+      const row = surveyManagementTableBody.insertRow()
+      row.innerHTML = `<td colspan="3" class="px-6 py-4 text-center text-sm text-red-500">Failed to load surveys.</td>`
+    }
+  }
+
+  // --- Point Transfers ---
+  let currentPage = 1
+  const itemsPerPage = 10
+
+  async function renderPointTransfers() {
+    if (!pointTransfersTableBody) return
+    pointTransfersTableBody.innerHTML = ""
+    try {
+      const startDate = document.getElementById("filterStartDate")?.value || ""
+      const endDate = document.getElementById("filterEndDate")?.value || ""
+      const searchEmail = document.getElementById("searchEmail")?.value || ""
+
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: itemsPerPage,
+        ...(startDate && { start_date: startDate }),
+        ...(endDate && { end_date: endDate }),
+        ...(searchEmail && { email: searchEmail }),
+      })
+
+      const data = await fetchApi(`/admin/point-transfers?${params}`, "GET", null, true)
+      const transfers = data.transfers || []
+      const totalPages = Math.ceil((data.total || 0) / itemsPerPage)
+
+      if (transfers.length === 0) {
+        const row = pointTransfersTableBody.insertRow()
+        row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No transfers found.</td>`
+      } else {
+        transfers.forEach((transfer) => {
+          const row = pointTransfersTableBody.insertRow()
+          row.className = "table-row"
+          row.innerHTML = `
+            <td class="table-cell">
+              <div class="font-medium text-gray-900">${transfer.from_user_email || "System"}</div>
+            </td>
+            <td class="table-cell">
+              <div class="font-medium text-gray-900">${transfer.to_user_email}</div>
+            </td>
+            <td class="table-cell">
+              <span class="font-semibold text-green-600">${transfer.amount}</span>
+            </td>
+            <td class="table-cell">
+              <div class="date-time">${formatDateTime(transfer.created_at)}</div>
+            </td>
+            <td class="table-cell">
+              <button onclick="viewTransferDetails('${transfer.id}')" class="btn-success">View</button>
+            </td>
           `
-      })
+        })
+      }
 
-      document.querySelectorAll(".approve-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("approve-user-", "")
-          updateUserStatus(userId, "approved")
-        })
-      })
-      document.querySelectorAll(".reject-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("reject-user-", "")
-          updateUserStatus(userId, "rejected")
-        })
-      })
-      document.querySelectorAll(".suspend-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("suspend-user-", "")
-          updateUserStatus(userId, "suspended")
-        })
-      })
-      document.querySelectorAll(".reactivate-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("reactivate-user-", "")
-          updateUserStatus(userId, "approved") // Backend uses 'approved' for reactivate
-        })
-      })
-      document.querySelectorAll(".promote-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("promote-user-", "")
-          promoteUserToAgent(userId, true)
-        })
-      })
-      document.querySelectorAll(".demote-user-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("demote-user-", "")
-          promoteUserToAgent(userId, false)
-        })
-      })
+      // Update pagination
+      document.getElementById("paginationInfo").textContent = `Page ${currentPage} of ${totalPages}`
+      document.getElementById("prevPageBtn").disabled = currentPage <= 1
+      document.getElementById("nextPageBtn").disabled = currentPage >= totalPages
+    } catch (error) {
+      console.error("Failed to fetch point transfers:", error)
+      const row = pointTransfersTableBody.insertRow()
+      row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-red-500">Failed to load transfers.</td>`
+    }
+  }
 
-      // Bulk actions
+  window.renderPointTransfers = renderPointTransfers
+
+  window.prevPage = () => {
+    if (currentPage > 1) {
+      currentPage--
+      renderPointTransfers()
+    }
+  }
+
+  window.nextPage = () => {
+    currentPage++
+    renderPointTransfers()
+  }
+
+  async function viewTransferDetails(transferId) {
+    try {
+      const transfer = await fetchApi(`/admin/point-transfers/${transferId}`, "GET", null, true)
+      alert(
+        `Transfer Details:\nFrom: ${transfer.from_user_email || "System"}\nTo: ${transfer.to_user_email}\nAmount: ${transfer.amount}\nDate: ${formatDateTime(transfer.created_at)}`,
+      )
+    } catch (error) {
+      console.error("Failed to fetch transfer details:", error)
+      alert("Failed to load transfer details")
+    }
+  }
+
+  // --- Redemption Requests ---
+  async function renderRedemptionRequests() {
+    if (!redemptionRequestsTableBody) return
+    redemptionRequestsTableBody.innerHTML = ""
+    try {
+      const requests = await fetchApi("/admin/redemption-requests", "GET", null, true)
+      if (requests.length === 0) {
+        const row = redemptionRequestsTableBody.insertRow()
+        row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No redemption requests found.</td>`
+        return
+      }
+      requests.forEach((request) => {
+        const row = redemptionRequestsTableBody.insertRow()
+        row.className = "table-row"
+        row.innerHTML = `
+          <td class="table-cell">
+            <div class="font-medium text-gray-900">${request.user_email}</div>
+          </td>
+          <td class="table-cell">
+            <span class="font-semibold text-red-600">${request.points}</span>
+          </td>
+          <td class="table-cell">
+            <span class="status-badge status-pending">${request.type}</span>
+          </td>
+          <td class="table-cell">
+            <div class="text-sm text-gray-900">${request.destination}</div>
+          </td>
+          <td class="table-cell">
+            <span class="status-badge ${getStatusClass(request.status)}">${request.status}</span>
+          </td>
+          <td class="table-cell">
+            <div class="flex flex-col sm:flex-row gap-2">
+              ${
+                request.status === "pending"
+                  ? `
+                <button onclick="approveRedemption('${request.id}')" class="btn-success">Approve</button>
+                <button onclick="rejectRedemption('${request.id}')" class="btn-danger">Reject</button>
+            `
+                  : `
+              <button onclick="viewRedemptionDetails('${request.id}')" class="btn-success">View</button>
+            `
+              }
+          </div>
+        </td>
+      `
+      })
+    } catch (error) {
+      console.error("Failed to fetch redemption requests:", error)
+      const row = redemptionRequestsTableBody.insertRow()
+      row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-red-500">Failed to load redemption requests.</td>`
+    }
+  }
+
+  async function approveRedemption(requestId) {
+    try {
+      await fetchApi(`/admin/redemption-requests/${requestId}/approve`, "PUT", null, true)
+      await renderRedemptionRequests()
+      alert("Redemption approved successfully")
+    } catch (error) {
+      console.error("Failed to approve redemption:", error)
+      alert("Failed to approve redemption")
+    }
+  }
+
+  async function rejectRedemption(requestId) {
+    if (!confirm("Are you sure you want to reject this redemption?")) return
+    try {
+      await fetchApi(`/admin/redemption-requests/${requestId}/reject`, "PUT", null, true)
+      await renderRedemptionRequests()
+      alert("Redemption rejected successfully")
+    } catch (error) {
+      console.error("Failed to reject redemption:", error)
+      alert("Failed to reject redemption")
+    }
+  }
+
+  async function viewRedemptionDetails(requestId) {
+    try {
+      const request = await fetchApi(`/admin/redemption-requests/${requestId}`, "GET", null, true)
+      alert(
+        `Redemption Details:\nUser: ${request.user_email}\nPoints: ${request.points}\nType: ${request.type}\nDestination: ${request.destination}\nStatus: ${request.status}\nDate: ${formatDateTime(request.created_at)}`,
+      )
+    } catch (error) {
+      console.error("Failed to fetch redemption details:", error)
+      alert("Failed to load redemption details")
+    }
+  }
+
+  // Fraud Management
+  async function renderFraudManagement() {
+    await renderFraudFlags()
+    await renderFraudRules()
+  }
+
+  async function renderFraudFlags() {
+    if (!fraudFlagsTableBody) return
+    fraudFlagsTableBody.innerHTML = ""
+    try {
+      const flags = await fetchApi("/admin/fraud/flags", "GET", null, true)
+      if (flags.length === 0) {
+        const row = fraudFlagsTableBody.insertRow()
+        row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No fraud flags found.</td>`
+        return
+      }
+      flags.forEach((flag) => {
+        const row = fraudFlagsTableBody.insertRow()
+        row.className = "table-row"
+        row.innerHTML = `
+        <td class="table-cell">
+          <div class="font-medium text-gray-900">${flag.user_email}</div>
+        </td>
+        <td class="table-cell">
+          <div class="text-sm text-gray-900">${flag.reason}</div>
+        </td>
+        <td class="table-cell">
+          <div class="date-time">${formatDateTime(flag.created_at)}</div>
+        </td>
+        <td class="table-cell">
+          <button onclick="clearFraudFlag('${flag.id}')" class="btn-success">Clear</button>
+        </td>
+      `
+      })
+    } catch (error) {
+      console.error("Failed to fetch fraud flags:", error)
+      const row = fraudFlagsTableBody.insertRow()
+      row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-sm text-red-500">Failed to load fraud flags.</td>`
+    }
+  }
+
+  async function renderFraudRules() {
+    if (!fraudRulesTableBody) return
+    fraudRulesTableBody.innerHTML = ""
+    try {
+      const rules = await fetchApi("/admin/fraud/rules", "GET", null, true)
+      if (rules.length === 0) {
+        const row = fraudRulesTableBody.insertRow()
+        row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No fraud rules found.</td>`
+        return
+      }
+      rules.forEach((rule) => {
+        const row = fraudRulesTableBody.insertRow()
+        row.className = "table-row"
+        row.innerHTML = `
+        <td class="table-cell">
+          <div class="font-medium text-gray-900">${rule.rule_key}</div>
+        </td>
+        <td class="table-cell">
+          <div class="text-sm text-gray-900">${rule.description}</div>
+        </td>
+        <td class="table-cell">
+          <span class="font-mono text-sm">${rule.limit_value}</span>
+        </td>
+        <td class="table-cell">
+          <span class="status-badge status-warning">${rule.action}</span>
+        </td>
+        <td class="table-cell">
+          <button onclick="editFraudRule('${rule.id}', '${rule.limit_value}')" class="btn-success">Edit</button>
+        </td>
+      `
+      })
+    } catch (error) {
+      console.error("Failed to fetch fraud rules:", error)
+      const row = fraudRulesTableBody.insertRow()
+      row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-red-500">Failed to load fraud rules.</td>`
+    }
+  }
+
+  async function clearFraudFlag(flagId) {
+    if (!confirm("Are you sure you want to clear this fraud flag?")) return
+    try {
+      await fetchApi(`/admin/fraud/flags/${flagId}`, "DELETE", null, true)
+      await renderFraudFlags()
+      alert("Fraud flag cleared successfully")
+    } catch (error) {
+      console.error("Failed to clear fraud flag:", error)
+      alert("Failed to clear fraud flag")
+    }
+  }
+
+  async function editFraudRule(ruleId, currentValue) {
+    const newValue = prompt("Edit fraud rule limit:", currentValue)
+    if (newValue === null || newValue === currentValue) return
+
+    try {
+      await fetchApi(`/admin/fraud/rules/${ruleId}`, "PUT", { limit_value: newValue }, true)
+      await renderFraudRules()
+      alert("Fraud rule updated successfully")
+    } catch (error) {
+      console.error("Failed to update fraud rule:", error)
+      alert("Failed to update fraud rule")
+    }
+  }
+
+  // --- Utility functions for better formatting and styling
+  function formatDateTime(dateString) {
+    if (!dateString) return "N/A"
+    const date = new Date(dateString)
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  function getStatusClass(status) {
+    switch (status?.toLowerCase()) {
+      case "approved":
+        return "status-approved"
+      case "pending":
+        return "status-pending"
+      case "rejected":
+        return "status-rejected"
+      case "suspended":
+        return "status-rejected"
+      default:
+        return "status-pending"
+    }
+  }
+
+  function getRoleClass(role) {
+    switch (role?.toLowerCase()) {
+      case "admin":
+        return "status-rejected"
+      case "agent":
+        return "status-approved"
+      case "user":
+        return "status-pending"
+      default:
+        return "status-pending"
+    }
+  }
+
+  function getActivityTypeClass(type) {
+    switch (type?.toLowerCase()) {
+      case "login":
+        return "status-approved"
+      case "error":
+        return "status-rejected"
+      case "warning":
+        return "status-pending"
+      default:
+        return "status-pending"
+    }
+  }
+
+  // --- Enhanced user action functions
+  async function approveUser(userId) {
+    try {
+      await fetchApi(`/admin/users/${userId}/approve`, "PUT", null, true)
+      await renderUserManagement()
+      alert("User approved successfully")
+    } catch (error) {
+      console.error("Failed to approve user:", error)
+      alert("Failed to approve user")
+    }
+  }
+
+  async function rejectUser(userId) {
+    if (!confirm("Are you sure you want to reject this user?")) return
+    try {
+      await fetchApi(`/admin/users/${userId}/reject`, "PUT", null, true)
+      await renderUserManagement()
+      alert("User rejected successfully")
+    } catch (error) {
+      console.error("Failed to reject user:", error)
+      alert("Failed to reject user")
+    }
+  }
+
+  async function suspendUser(userId) {
+    if (!confirm("Are you sure you want to suspend this user?")) return
+    try {
+      await fetchApi(`/admin/users/${userId}/suspend`, "PUT", null, true)
+      await renderUserManagement()
+      alert("User suspended successfully")
+    } catch (error) {
+      console.error("Failed to suspend user:", error)
+      alert("Failed to suspend user")
+    }
+  }
+
+  async function reactivateUser(userId) {
+    try {
+      await fetchApi(`/admin/users/${userId}/reactivate`, "PUT", null, true)
+      await renderUserManagement()
+      alert("User reactivated successfully")
+    } catch (error) {
+      console.error("Failed to reactivate user:", error)
+      alert("Failed to reactivate user")
+    }
+  }
+
+  async function viewAgentDetails(agentId) {
+    try {
+      const agent = await fetchApi(`/admin/agents/${agentId}`, "GET", null, true)
+      alert(
+        `Agent Details:\nName: ${agent.name}\nEmail: ${agent.email}\nReferral Code: ${agent.referral_code}\nReferred Users: ${agent.referred_users}\nAppointed: ${formatDateTime(agent.appointed_at)}`,
+      )
+    } catch (error) {
+      console.error("Failed to fetch agent details:", error)
+      alert("Failed to load agent details")
+    }
+  }
+
+  async function removeAgent(agentId) {
+    if (!confirm("Are you sure you want to remove this agent?")) return
+    try {
+      await fetchApi(`/admin/agents/${agentId}`, "DELETE", null, true)
+      await renderAgentManagement()
+      alert("Agent removed successfully")
+    } catch (error) {
+      console.error("Failed to remove agent:", error)
+      alert("Failed to remove agent")
+    }
+  }
+
+  // Initialize dashboard when DOM is loaded
+  document.addEventListener("DOMContentLoaded", () => {
+    protectRoute()
+    handleLoginForm()
+    handlePinForm()
+
+    // Dashboard initialization
+    if (document.getElementById("sidebar")) {
+      initializeDashboardElements()
+      initializeDashboardEventListeners()
+
+      // Load initial section based on URL hash
+      const hash = window.location.hash.substring(1)
+      const initialSection = hash || "dashboard-overview"
+      const targetSectionId = initialSection + "-section"
+
+      // Set initial active states
+      const initialLink = document.getElementById(initialSection + "-link")
+      if (initialLink) {
+        navLinks.forEach((nav) => nav.classList.remove("bg-gray-700", "text-white"))
+        sections.forEach((sec) => sec.classList.remove("active"))
+
+        initialLink.classList.add("bg-gray-700", "text-white")
+        document.getElementById(targetSectionId).classList.add("active")
+        renderSectionContent(targetSectionId)
+      }
+
+      // Send Points Form
+      if (sendPointsForm) {
+        sendPointsForm.addEventListener("submit", async (e) => {
+          e.preventDefault()
+          const fromEmail = document.getElementById("from-user-email").value
+          const toEmail = document.getElementById("to-user-email").value
+          const amount = Number.parseInt(document.getElementById("points-amount").value)
+
+          try {
+            await fetchApi(
+              "/admin/point-transfers",
+              "POST",
+              {
+                from_user_email: fromEmail || null,
+                to_user_email: toEmail,
+                amount: amount,
+              },
+              true,
+            )
+
+            sendPointsForm.reset()
+            await renderPointTransfers()
+            alert("Points sent successfully!")
+          } catch (error) {
+            console.error("Failed to send points:", error)
+            alert(`Failed to send points: ${error.message}`)
+          }
+        })
+      }
+
+      // Bulk user actions
       if (approveAllPendingUsersBtn) {
         approveAllPendingUsersBtn.addEventListener("click", async () => {
-          const pendingUserIds = users.filter((user) => user.status === "pending").map((user) => user.id)
-          if (pendingUserIds.length > 0) {
-            if (confirm(`Are you sure you want to approve ${pendingUserIds.length} pending users?`)) {
-              try {
-                await fetchApi(
-                  "/admin/users/bulk-status",
-                  "PUT",
-                  { user_ids: pendingUserIds, status: "approved" },
-                  true,
-                )
-                console.log("All pending users approved!") // Changed from alert
-                renderUserManagement()
-                renderDashboardOverview()
-              } catch (error) {
-                alert(`Failed to bulk approve users: ${error.message}`)
-              }
-            }
-          } else {
-            alert("No pending users to approve.")
+          if (!confirm("Are you sure you want to approve all pending users?")) return
+          try {
+            await fetchApi("/admin/users/approve-all-pending", "PUT", null, true)
+            await renderUserManagement()
+            alert("All pending users approved successfully")
+          } catch (error) {
+            console.error("Failed to approve all pending users:", error)
+            alert("Failed to approve all pending users")
           }
         })
       }
 
       if (rejectAllPendingUsersBtn) {
         rejectAllPendingUsersBtn.addEventListener("click", async () => {
-          const pendingUserIds = users.filter((user) => user.status === "pending").map((user) => user.id)
-          if (pendingUserIds.length > 0) {
-            if (
-              confirm(
-                `Are you sure you want to reject and delete ${pendingUserIds.length} pending users? This action is irreversible.`,
-              )
-            ) {
-              try {
-                await fetchApi(
-                  "/admin/users/bulk-status",
-                  "PUT",
-                  { user_ids: pendingUserIds, status: "rejected" },
-                  true,
-                )
-                console.log("All pending users rejected and deleted!") // Changed from alert
-                renderUserManagement()
-                renderDashboardOverview()
-              } catch (error) {
-                alert(`Failed to bulk reject users: ${error.message}`)
-              }
-            }
-          } else {
-            alert("No pending users to reject.")
-          }
-        })
-      }
-
-      // Call the new setup function after elements are rendered
-      setupUserManagementListeners()
-    } catch (error) {
-      console.error("Failed to fetch users:", error)
-      alert(`Failed to load user data: ${error.message}`)
-    }
-  }
-
-  // Add this new function:
-  async function setupUserManagementListeners() {
-    const toggle = document.getElementById("auto-user-approval-toggle")
-    const toggleBg = toggle.nextElementSibling // The div with class toggle-bg
-    const toggleDot = toggleBg.firstElementChild // The div with class toggle-dot
-    const label = document.getElementById("approvalStatusLabel")
-
-    if (!toggle) return
-
-    function updateLabelUI(checked) {
-      if (!label) return
-
-      if (checked) {
-        label.textContent = "Auto-Approval is ON"
-        label.classList.remove("text-gray-500")
-        label.classList.add("text-green-600", "font-semibold")
-      } else {
-        label.textContent = "Auto-Approval is OFF"
-        label.classList.remove("text-green-600")
-        label.classList.add("text-gray-500")
-      }
-    }
-
-    // Load current setting
-    try {
-      const res = await fetchApi("/admin/settings", "GET", null, true)
-      const setting = res.find((s) => s.key === "auto_user_approval")
-
-      if (setting) {
-        const isOn = setting.value === "true"
-        toggle.checked = isOn
-        if (isOn) {
-          toggleBg.classList.add("checked")
-          toggleDot.classList.add("checked")
-        } else {
-          toggleBg.classList.remove("checked")
-          toggleDot.classList.remove("checked")
-        }
-        updateLabelUI(isOn)
-      }
-    } catch (error) {
-      console.error("Failed to load auto approval setting:", error)
-    }
-
-    // Listen for toggle changes
-    toggle.addEventListener("change", async (e) => {
-      const newValue = e.target.checked.toString()
-      const checked = e.target.checked
-
-      if (checked) {
-        toggleBg.classList.add("checked")
-        toggleDot.classList.add("checked")
-      } else {
-        toggleBg.classList.remove("checked")
-        toggleDot.classList.remove("checked")
-      }
-
-      try {
-        await fetchApi(
-          "/admin/settings",
-          "PUT",
-          {
-            key: "auto_user_approval",
-            value: newValue,
-            description: "Automatically approve new user registrations", // Keep description for consistency
-          },
-          true,
-        )
-
-        updateLabelUI(e.target.checked)
-        console.log(`Auto User Approval set to: ${newValue}`) // Changed from alert
-      } catch (error) {
-        alert(`Failed to update setting: ${error.message}`)
-        e.target.checked = !e.target.checked // Revert toggle state on error
-        if (e.target.checked) {
-          // Revert visual state
-          toggleBg.classList.add("checked")
-          toggleDot.classList.add("checked")
-        } else {
-          toggleBg.classList.remove("checked")
-          toggleDot.classList.remove("checked")
-        }
-        updateLabelUI(e.target.checked)
-      }
-    })
-  }
-
-  async function updateUserStatus(userId, newStatus) {
-    try {
-      if (
-        newStatus === "rejected" &&
-        !confirm("Are you sure you want to reject and permanently delete this user? This action is irreversible.")
-      ) {
-        return // Stop if user cancels
-      }
-      await fetchApi(`/admin/users/${userId}/status`, "PUT", { status: newStatus }, true)
-      console.log(`User status updated to ${newStatus}.`) // Changed from alert
-      renderUserManagement() // Re-render table
-      renderDashboardOverview()
-    } catch (error) {
-      alert(`Failed to update user status: ${error.message}`)
-    }
-  }
-
-  async function promoteUserToAgent(userId, isAgent) {
-    try {
-      const data = await fetchApi(
-        `/admin/users/${userId}/agent`,
-        "PUT",
-        { user_id: Number.parseInt(userId), is_agent: isAgent },
-        true,
-      )
-      console.log(`Agent role ${isAgent ? "assigned" : "removed"}. Referral code: ${data.referral_code || "N/A"}`) // Changed from alert
-      renderUserManagement() // Re-render user table
-      renderAgentManagement() // Re-render agent table
-    } catch (error) {
-      alert(`Failed to update agent role: ${error.message}`)
-    }
-  }
-
-  // --- Agent Management ---
-  async function renderAgentManagement() {
-    if (!agentManagementTableBody) return
-    agentManagementTableBody.innerHTML = ""
-    try {
-      const allUsers = await fetchApi("/admin/users", "GET", null, true)
-      agents = allUsers.filter((user) => user.is_agent) // Filter agents from all users
-
-      if (agents.length === 0) {
-        const row = agentManagementTableBody.insertRow()
-        row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No agents found.</td>`
-        return
-      }
-
-      agents.forEach((agent) => {
-        const row = agentManagementTableBody.insertRow()
-        row.innerHTML = `
-              <td class="table-row-data font-medium text-gray-900">${agent.name}</td>
-              <td class="table-row-data">${agent.referral_code || "N/A"}</td>
-              <td class="table-row-data">${agent.referred_users_count || 0}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button id="demote-agent-${agent.id}" class="action-btn demote-agent-btn text-red-600 hover:text-red-900">Demote Agent</button>
-              </td>
-          `
-      })
-
-      document.querySelectorAll(".demote-agent-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const agentId = e.target.id.replace("demote-agent-", "")
-          promoteUserToAgent(agentId, false) // Use the same promote/demote function
-        })
-      })
-    } catch (error) {
-      console.error("Failed to fetch agents:", error)
-      alert(`Failed to load agent data: ${error.message}`)
-    }
-  }
-
-  // --- Survey Management ---
-  async function renderSurveyManagement() {
-    const surveyManagementTableBody = document.getElementById("survey-management-table-body") // Corrected ID
-    if (!surveyManagementTableBody) return
-
-    surveyManagementTableBody.innerHTML = `
-      <tr>
-        <td colspan="3" class="px-6 py-4 text-center text-lg text-gray-600">
-          Survey Management is temporarily closed for maintenance. Please check back later.
-        </td>
-      </tr>
-    `
-    // No API calls or further rendering logic here, as it's temporarily closed.
-  }
-
-  // --- Point Transfers ---
-  let currentPage = 1
-  const pageSize = 5
-  let fullTransferList = []
-
-  // Exposed globally for onclick in HTML
-  window.renderPointTransfers = async () => {
-    const tbody = document.getElementById("pointTransfersTableBody")
-    const startDateInput = document.getElementById("filterStartDate")
-    const endDateInput = document.getElementById("filterEndDate")
-    const searchEmailInput = document.getElementById("searchEmail")
-
-    const startDate = startDateInput.value
-    const endDate = endDateInput.value
-    const searchEmail = searchEmailInput.value.toLowerCase()
-
-    tbody.innerHTML = ""
-
-    try {
-      let endpoint = `/admin/point-transfers?skip=0&limit=1000` // Fetch all to filter client-side
-      if (startDate) endpoint += `&date=${startDate}` // Backend can filter by day
-      if (searchEmail) endpoint += `&email=${searchEmail}` // Backend can filter by email
-
-      // Fetch all transfers from backend first, then apply client-side date range if necessary
-      const transfers = await fetchApi(endpoint, "GET", null, true)
-
-      fullTransferList = transfers.filter((t) => {
-        const createdAt = new Date(t.created_at)
-        const fromEmail = t.from_user?.email?.toLowerCase() || ""
-        const toEmail = t.to_user?.email?.toLowerCase() || ""
-
-        const matchEmail = !searchEmail || fromEmail.includes(searchEmail) || toEmail.includes(searchEmail)
-
-        // Adjust date filtering for full range if backend only filters by day
-        const filterStartDateObj = startDate ? new Date(startDate + "T00:00:00") : null
-        const filterEndDateObj = endDate ? new Date(endDate + "T23:59:59") : null
-
-        const matchDate =
-          (!filterStartDateObj || createdAt >= filterStartDateObj) &&
-          (!filterEndDateObj || createdAt <= filterEndDateObj)
-
-        return matchEmail && matchDate
-      })
-
-      currentPage = 1 // Reset to first page after new filter
-      const start = (currentPage - 1) * pageSize
-      const paginatedTransfers = fullTransferList.slice(start, start + pageSize)
-
-      // Render table
-      if (paginatedTransfers.length === 0) {
-        const row = tbody.insertRow()
-        row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No point transfers found.</td>`
-      } else {
-        paginatedTransfers.forEach((t) => {
-          const row = tbody.insertRow()
-          row.innerHTML = `
-            <td class="table-row-data font-medium text-gray-900">${t.from_user?.email || "N/A"}</td>
-            <td class="table-row-data">${t.to_user?.email || "N/A"}</td>
-            <td class="table-row-data">${t.amount}</td>
-            <td class="table-row-data">${new Date(t.created_at).toLocaleString()}</td>
-            <td class="px-6 py-4 text-right text-sm font-medium"></td>
-          `
-        })
-      }
-
-      updatePaginationDisplay()
-    } catch (err) {
-      console.error("Failed to fetch transfers:", err)
-      alert("Error loading transfers.")
-    }
-  }
-
-  function updatePaginationDisplay() {
-    const total = fullTransferList.length
-    const totalPages = Math.max(1, Math.ceil(total / pageSize))
-    const info = document.getElementById("paginationInfo")
-    info.textContent = `Page ${currentPage} of ${totalPages}`
-
-    const prevBtn = document.querySelector('button[onclick="window.prevPage()"]')
-    const nextBtn = document.querySelector('button[onclick="window.nextPage()"]')
-
-    if (prevBtn) prevBtn.disabled = currentPage === 1
-    if (nextBtn) nextBtn.disabled = currentPage === totalPages
-  }
-
-  // Exposed globally for onclick in HTML
-  window.nextPage = () => {
-    const totalPages = Math.ceil(fullTransferList.length / pageSize)
-    if (currentPage < totalPages) {
-      currentPage++
-      window.renderPointTransfers()
-    }
-  }
-
-  // Exposed globally for onclick in HTML
-  window.prevPage = () => {
-    if (currentPage > 1) {
-      currentPage--
-      window.renderPointTransfers()
-    }
-  }
-
-  // --- Redemption Requests ---
-
-  async function renderRedemptionRequests() {
-    if (!redemptionRequestsTableBody) return
-    redemptionRequestsTableBody.innerHTML = ""
-
-    try {
-      const redemptionRequests = await fetchApi("/admin/redemptions", "GET", null, true) // Admin endpoint
-
-      if (redemptionRequests.length === 0) {
-        const row = redemptionRequestsTableBody.insertRow()
-        row.innerHTML = `<td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No redemption requests found.</td>`
-        return
-      }
-
-      // Sort so pending requests are on top
-      redemptionRequests.sort((a, b) => {
-        if (a.status === "pending" && b.status !== "pending") return -1
-        if (a.status !== "pending" && b.status === "pending") return 1
-        return 0
-      })
-
-      redemptionRequests.forEach((request) => {
-        // Determine destination based on type
-        const destination = request.destination || ""
-
-        const row = redemptionRequestsTableBody.insertRow()
-        row.innerHTML = `
-          <td class="table-row-data font-medium text-gray-900">${request.user_email || request.user_id}</td>
-          <td class="table-row-data">${request.points_amount}</td>
-          <td class="table-row-data">${request.type}</td>
-          <td class="table-row-data">${destination}</td>
-          <td class="table-row-data capitalize">${request.status}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            ${
-              request.status === "pending"
-                ? `<button id="approve-redemption-${request.id}" class="action-btn approve-redemption-btn text-green-600 hover:text-green-900 mr-2">Approve</button>`
-                : ""
-            }
-            ${
-              request.status === "pending"
-                ? `<button id="reject-redemption-${request.id}" class="action-btn reject-redemption-btn text-red-600 hover:text-red-900">Reject</button>`
-                : ""
-            }
-          </td>
-        `
-      })
-
-      // Attach event listeners for approve/reject buttons
-      document.querySelectorAll(".approve-redemption-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const requestId = e.target.id.replace("approve-redemption-", "")
-          updateRedemptionStatus(requestId, "approve") // Backend expects 'approve' or 'reject'
-        })
-      })
-
-      document.querySelectorAll(".reject-redemption-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const requestId = e.target.id.replace("reject-redemption-", "")
-          updateRedemptionStatus(requestId, "reject") // Backend expects 'approve' or 'reject'
-        })
-      })
-    } catch (error) {
-      console.error("Failed to fetch redemption requests:", error)
-      alert(`Failed to load redemption requests: ${error.message}`)
-    }
-  }
-
-  async function updateRedemptionStatus(requestId, action) {
-    try {
-      await fetchApi(`/admin/redemptions/${requestId}/process?action=${action}`, "PUT", null, true)
-      console.log(`Redemption request ${requestId} status updated to ${action}.`) // Changed from alert
-      renderRedemptionRequests()
-      renderDashboardOverview()
-    } catch (error) {
-      alert(`Failed to update redemption status: ${error.message}`)
-    }
-  }
-
-  // --- Table Sorting Logic ---
-  function setupTableSorting() {
-    document.querySelectorAll(".sortable-header").forEach((header) => {
-      header.addEventListener("click", () => {
-        const table = header.closest("table")
-        const tbody = table.querySelector("tbody")
-        const rows = Array.from(tbody.querySelectorAll("tr"))
-        const sortBy = header.dataset.sortBy
-        const isAsc = header.classList.contains("asc")
-
-        table.querySelectorAll(".sortable-header").forEach((h) => {
-          h.classList.remove("asc", "desc")
-        })
-
-        const newIsAsc = !isAsc
-        header.classList.add(newIsAsc ? "asc" : "desc")
-
-        rows.sort((a, b) => {
-          const aText = a
-            .querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`)
-            .textContent.trim()
-          const bText = b
-            .querySelector(`td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`)
-            .textContent.trim()
-
-          let valA = aText
-          let valB = bText
-
-          if (
-            !isNaN(Number.parseFloat(aText)) &&
-            isFinite(aText) &&
-            !isNaN(Number.parseFloat(bText)) &&
-            isFinite(bText)
-          ) {
-            valA = Number.parseFloat(aText)
-            valB = Number.parseFloat(bText)
-          } else if (sortBy === "timestamp") {
-            valA = new Date(aText).getTime()
-            valB = new Date(bText).getTime()
-          }
-
-          if (valA < valB) {
-            return newIsAsc ? -1 : 1
-          }
-          if (valA > valB) {
-            return newIsAsc ? 1 : -1
-          }
-          return 0
-        })
-
-        rows.forEach((row) => tbody.appendChild(row))
-      })
-    })
-  }
-
-  // --- Send Points Form Logic ---
-  function setupSendPointsForm() {
-    const sendPointsForm = document.getElementById("send-points-form")
-    if (!sendPointsForm) return
-
-    sendPointsForm.addEventListener("submit", async (e) => {
-      e.preventDefault()
-      const fromUserEmailInput = document.getElementById("from-user-email")
-      const toUserEmailInput = document.getElementById("to-user-email")
-      const pointsAmountInput = document.getElementById("points-amount")
-
-      const fromUserEmail = fromUserEmailInput ? fromUserEmailInput.value.trim() : null
-      const toUserEmail = toUserEmailInput.value.trim()
-      const pointsAmount = Number.parseInt(pointsAmountInput.value, 10)
-
-      if (!toUserEmail || isNaN(pointsAmount) || pointsAmount <= 0) {
-        alert("Please provide a valid receiver email and a positive amount of points.")
-        return
-      }
-
-      const payload = {
-        to_user_email: toUserEmail,
-        points_amount: pointsAmount,
-      }
-
-      if (fromUserEmail) {
-        payload.from_user_email = fromUserEmail
-      }
-
-      try {
-        await fetchApi("/admin/point-transfers", "POST", payload, true)
-        console.log("Points sent successfully.") // Changed from alert
-        sendPointsForm.reset() // Clear the form
-        window.renderPointTransfers() // Re-render transfers table
-        renderDashboardOverview() // Update dashboard stats
-      } catch (error) {
-        alert(`Failed to send points: ${error.message}`)
-      }
-    })
-  }
-
-  // --- Fraud Management (Flags) ---
-  async function renderFraudManagement() {
-    if (!fraudFlagsTableBody) return
-    fraudFlagsTableBody.innerHTML = ""
-
-    try {
-      const fraudFlags = await fetchApi("/admin/fraud-flags", "GET", null, true)
-
-      if (fraudFlags.length === 0) {
-        const row = fraudFlagsTableBody.insertRow()
-        row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No fraud flags found.</td>`
-        return
-      }
-
-      fraudFlags.forEach((flag) => {
-        const row = fraudFlagsTableBody.insertRow()
-        row.innerHTML = `
-          <td class="table-row-data font-medium text-gray-900">${flag.user.email}</td>
-          <td class="table-row-data">${flag.reason}</td>
-          <td class="table-row-data">${new Date(flag.created_at).toLocaleString()}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <button id="clear-flag-${flag.user.id}" class="action-btn clear-fraud-flag-btn text-red-600 hover:text-red-900">Clear Flag</button>
-          </td>
-        `
-      })
-
-      document.querySelectorAll(".clear-fraud-flag-btn").forEach((button) => {
-        button.addEventListener("click", (e) => {
-          const userId = e.target.id.replace("clear-flag-", "")
-          clearFraudFlag(userId)
-        })
-      })
-    } catch (error) {
-      console.error("Failed to fetch fraud flags:", error)
-      alert(`Failed to load fraud flags: ${error.message}`)
-    }
-  }
-
-  async function clearFraudFlag(userId) {
-    if (
-      !confirm("Are you sure you want to clear this fraud flag? This will also reset device tracking for this user.")
-    ) {
-      return
-    }
-    try {
-      await fetchApi(`/admin/fraud-flags/${userId}`, "DELETE", null, true)
-      console.log(`Fraud flag for user ID ${userId} cleared successfully.`) // Changed from alert
-      renderFraudManagement() // Re-render the flags table
-      renderUserManagement() // Re-render user table to reflect is_flagged status change
-    } catch (error) {
-      alert(`Failed to clear fraud flag: ${error.message}`)
-    }
-  }
-
-  // --- Fraud Management (Rules) ---
-  async function renderFraudRules() {
-    if (!fraudRulesTableBody) return
-    fraudRulesTableBody.innerHTML = ""
-
-    try {
-      const fraudRules = await fetchApi("/admin/fraud/rules", "GET", null, true)
-
-      if (fraudRules.length === 0) {
-        const row = fraudRulesTableBody.insertRow()
-        row.innerHTML = `<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No fraud rules found.</td>`
-        return
-      }
-
-      fraudRules.forEach((rule) => {
-        // Add defensive checks for rule and rule.rule_key
-        if (!rule || typeof rule.rule_key === "undefined" || rule.rule_key === null) {
-          console.warn("Skipping malformed fraud rule:", rule)
-          return
-        }
-
-        const row = fraudRulesTableBody.insertRow()
-        row.innerHTML = `
-          <td class="table-row-data font-medium text-gray-900">${rule.rule_key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</td>
-          <td class="table-row-data">${rule.description || "N/A"}</td>
-          <td class="table-row-data">
-            <input type="number" value="${rule.limit_value}" class="input-field w-24 text-center fraud-rule-limit" data-rule-key="${rule.rule_key}" min="1">
-          </td>
-          <td class="table-row-data">
-            <select class="input-field fraud-rule-action" data-rule-key="${rule.rule_key}">
-              <option value="allow" ${rule.action === "allow" ? "selected" : ""}>Allow</option>
-              <option value="flag" ${rule.action === "flag" ? "selected" : ""}>Flag</option>
-              <option value="block" ${rule.action === "block" ? "selected" : ""}>Block</option>
-              <option value="flag_and_block" ${rule.action === "flag_and_block" ? "selected" : ""}>Flag & Block</option>
-            </select>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <button class="btn btn-primary save-fraud-rule-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md" data-rule-key="${rule.rule_key}">Save</button>
-          </td>
-        `
-        fraudRulesTableBody.appendChild(row)
-      })
-
-      document.querySelectorAll(".save-fraud-rule-btn").forEach((button) => {
-        button.addEventListener("click", async (e) => {
-          const ruleKey = e.target.dataset.ruleKey
-          const row = e.target.closest("tr")
-          const limitValue = Number.parseInt(row.querySelector(".fraud-rule-limit").value, 10)
-          const action = row.querySelector(".fraud-rule-action").value
-
-          if (isNaN(limitValue) || limitValue < 1) {
-            alert("Limit value must be a positive number.")
-            return
-          }
-
+          if (!confirm("Are you sure you want to reject all pending users?")) return
           try {
-            // Only send limit_value and action, as rule_key is in the path
-            await fetchApi(`/admin/fraud/rules/${ruleKey}`, "POST", { limit_value: limitValue, action: action }, true)
-            console.log(`Fraud rule "${ruleKey}" updated successfully.`) // Changed from alert
-            renderFraudRules() // Re-render to show updated values
+            await fetchApi("/admin/users/reject-all-pending", "PUT", null, true)
+            await renderUserManagement()
+            alert("All pending users rejected successfully")
           } catch (error) {
-            console.error("Error updating fraud rule:", error)
-            alert(`Failed to update fraud rule "${ruleKey}": ${error.message}`)
+            console.error("Failed to reject all pending users:", error)
+            alert("Failed to reject all pending users")
           }
         })
-      })
-    } catch (error) {
-      console.error("Failed to fetch fraud rules:", error)
-      alert(`Failed to load fraud rules: ${error.message}`)
-    }
-  }
-
-  // --- Mobile Navigation Setup ---
-  function setupMobileNavigation() {
-    // Mobile navigation logic here
-    const mobileMenuToggle = document.getElementById("mobile-menu-toggle")
-    const mobileMenu = document.getElementById("mobile-menu")
-
-    if (mobileMenuToggle && mobileMenu) {
-      mobileMenuToggle.addEventListener("click", () => {
-        mobileMenu.classList.toggle("hidden")
-      })
-    }
-  }
-
-  // --- Search Functionality Setup ---
-  function setupSearchFunctionality() {
-    // Search functionality logic here
-    const searchInput = document.getElementById("search-input")
-    const searchResults = document.getElementById("search-results")
-
-    if (searchInput && searchResults) {
-      searchInput.addEventListener("input", async (e) => {
-        const query = e.target.value.trim()
-        if (query) {
-          try {
-            const results = await fetchApi("/admin/search", "GET", { query }, true)
-            searchResults.innerHTML = ""
-            results.forEach((result) => {
-              const row = searchResults.insertRow()
-              row.innerHTML = `<td>${result.name}</td><td>${result.email}</td>`
-            })
-          } catch (error) {
-            console.error("Failed to fetch search results:", error)
-            searchResults.innerHTML = `<td colspan="2">No results found.</td>`
-          }
-        } else {
-          searchResults.innerHTML = ""
-        }
-      })
-    }
-  }
-
-  // --- Toggle Functionality Setup ---
-  function setupToggleFunctionality() {
-    // Toggle functionality logic here
-    const toggleButtons = document.querySelectorAll(".toggle-btn")
-
-    toggleButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        button.classList.toggle("active")
-      })
-    })
-  }
-
-  // --- Global Event Listener for all pages ---
-  document.addEventListener("DOMContentLoaded", () => {
-    protectRoute() // Run protection on every page load
-
-    // Initialize specific page logic based on current URL
-    const currentPath = window.location.pathname
-
-    if (currentPath === "/" || currentPath.includes("index.html")) {
-      // Covers root index.html (login)
-      handleLoginForm()
-    } else if (currentPath.includes("/pin/")) {
-      // Covers /pin/index.html
-      handlePinForm()
-    } else if (currentPath.includes("/dashboard/")) {
-      initializeDashboardElements()
-      setupSidebarAndNav()
-      setupMobileNavigation()
-      setupSearchFunctionality()
-      setupSendPointsForm()
-      setupTableSorting()
-      setupToggleFunctionality()
-
-      // Determine initial section based on URL hash or default
-      const initialHash = window.location.hash.substring(1)
-      const initialSectionId = initialHash || "dashboard-overview-section"
-
-      // Set initial active link and section
-      const initialLink = document.getElementById(initialSectionId.replace("-section", "-link"))
-      if (initialLink) {
-        initialLink.classList.add("bg-gray-700", "text-white")
       }
 
-      document.getElementById(initialSectionId).classList.add("active")
-      renderSectionContent(initialSectionId)
+      // Logout button functionality
+      if (logoutButton) {
+        logoutButton.addEventListener("click", () => {
+          console.log("Logging out...")
+          clearSession()
+          window.location.href = "/"
+        })
+      }
     }
   })
 })()
