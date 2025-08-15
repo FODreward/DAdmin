@@ -389,54 +389,63 @@
         </div>
 
         <!-- User Management Section -->
-        <div id="user-management-section" class="section-content">
-            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem;">User Management</h1>
-            
-            <!-- Search functionality -->
-            <div class="search-container">
-                <div style="position: relative;">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="user-search-input" class="search-input" placeholder="Search by name, email, or ID..." onkeyup="renderUserManagement()">
-                </div>
-            </div>
-
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h3 style="font-weight: 600;">Auto User Approval</h3>
-                    <div style="display: flex; align-items: center;">
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" class="sr-only peer" id="auto-user-approval-toggle" />
-                            <div class="toggle-bg">
-                                <div class="toggle-dot"></div>
-                            </div>
-                        </label>
-                        <span class="ml-3 text-sm font-semibold text-gray-700" id="approvalStatusLabel">Auto-Approval is OFF</span>
+        <section id="user-management-section" class="section-content">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">User Management</h2>
+            <div class="card mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                    <h3 class="text-lg font-medium text-gray-700">User List</h3>
+                    <div class="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
+                        <div class="relative w-full md:w-64">
+                            <input
+                                type="text"
+                                id="user-search"
+                                placeholder="Search by email, name, or ID..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                oninput="renderUserManagement()"
+                            />
+                            <svg class="absolute right-3 top-2.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" value="" class="sr-only peer" id="auto-user-approval-toggle" />
+                                <div class="toggle-bg">
+                                    <div class="toggle-dot"></div>
+                                </div>
+                                <span id="approvalStatusLabel" class="ml-3 text-sm font-medium text-gray-500">Auto-Approval is OFF</span>
+                            </label>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="approve-all-pending-users-btn" class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-md text-sm whitespace-nowrap">
+                                Approve All Pending
+                            </button>
+                            <button id="reject-all-pending-users-btn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md text-sm whitespace-nowrap">
+                                Reject All Pending
+                            </button>
+                        </div>
                     </div>
                 </div>
-                
-                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                    <button id="approve-all-pending-users-btn" class="btn btn-primary" style="background: #48bb78;">Approve All Pending</button>
-                    <button id="reject-all-pending-users-btn" class="btn btn-primary" style="background: #f56565;">Reject All Pending</button>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="table-header sortable-header" data-sort-by="name">User</th>
+                                <th scope="col" class="table-header sortable-header" data-sort-by="email">Email</th>
+                                <th scope="col" class="table-header sortable-header" data-sort-by="status">Status</th>
+                                <th scope="col" class="table-header sortable-header" data-sort-by="role">Role</th>
+                                <th scope="col" class="table-header sortable-header" data-sort-by="created_at">Date Joined</th>
+                                <th scope="col" class="table-header sortable-header" data-sort-by="points">Points</th>
+                                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-management-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- User data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
-
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>User ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Date Joined</th>
-                            <th>Status</th>
-                            <th>Role</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="user-management-table-body"></tbody>
-                </table>
-            </div>
-        </div>
+        </section>
 
         <!-- Agent Management Section -->
         <div id="agent-management-section" class="section-content">
@@ -626,7 +635,7 @@
         </div>
     </div>
 
-    <script src="/script.js"></script>
+    <script src="script.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
@@ -665,3 +674,4 @@
     </script>
 </body>
 </html>
+</merged_code>
